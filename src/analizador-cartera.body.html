@@ -1,0 +1,996 @@
+<title>Analizador de Cartera</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  color-scheme:light;
+  --bg:#f4f4f1; --surface:#fcfcfb; --surface-2:#f7f7f5;
+  --border:#e3e2dd; --border-strong:#cfcec8;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#82817b;
+  --age0:#b8b7b0; --age1:#86b6ef; --age2:#5598e7; --age3:#2a78d6; --age4:#1c5cab; --age5:#104281;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --accent:#2a78d6;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 1px 3px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#141413; --surface:#1a1a19; --surface-2:#222221;
+  --border:#333331; --border-strong:#454542;
+  --ink:#fff; --ink-2:#c3c2b7; --ink-3:#8f8e85;
+  --age0:#54534e; --age1:#184f95; --age2:#256abf; --age3:#3987e5; --age4:#6da7ec; --age5:#9ec5f4;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141413; --surface:#1a1a19; --surface-2:#222221;
+  --border:#333331; --border-strong:#454542;
+  --ink:#fff; --ink-2:#c3c2b7; --ink-3:#8f8e85;
+  --age0:#54534e; --age1:#184f95; --age2:#256abf; --age3:#3987e5; --age4:#6da7ec; --age5:#9ec5f4;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 72px}
+h1,h2,h3{margin:0;font-weight:640;letter-spacing:-.011em}
+h1{font-size:19px}
+h2{font-size:15px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+/* ---------- top bar ---------- */
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:7px;background:var(--accent);color:#fff;flex:none;
+  display:grid;place-items:center;font-size:15px}
+.sub{font-size:12px;color:var(--ink-3);margin-top:1px}
+.acts{display:flex;gap:7px;flex-wrap:wrap}
+button,.btn{font:inherit;font-size:13px;font-weight:520;padding:6px 12px;border-radius:7px;
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);
+  cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+button:hover,.btn:hover{background:var(--surface-2);border-color:var(--ink-3)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{filter:brightness(1.08)}
+button:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- dropzone ---------- */
+.drop{border:1.5px dashed var(--border-strong);border-radius:12px;background:var(--surface);
+  padding:44px 24px;text-align:center;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.drop h2{font-size:16px;margin-bottom:6px}
+.drop p{color:var(--ink-2);margin:0 auto 16px;max-width:460px;font-size:13px}
+.drop .hint{font-size:12px;color:var(--ink-3);margin-top:14px}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:8px 14px;font-size:13.5px;font-weight:540;color:var(--ink-3);cursor:pointer;
+  border:0;background:none;border-bottom:2px solid transparent;border-radius:0;white-space:nowrap}
+.tab:hover{color:var(--ink-2);background:none}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card>header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.card>header .note{font-size:12px;color:var(--ink-3)}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 15px;box-shadow:var(--shadow)}
+.kpi .lbl{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.kpi .val{font-size:25px;font-weight:660;letter-spacing:-.02em;margin-top:5px;line-height:1.1}
+.kpi .foot{font-size:12px;color:var(--ink-2);margin-top:4px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kpi.bad .val{color:var(--crit)}
+.delta{font-weight:600;font-size:12px}
+.delta.up{color:var(--crit)} .delta.down{color:var(--good)} .delta.flat{color:var(--ink-3)}
+
+/* ---------- aging bars ---------- */
+.ages{display:flex;flex-direction:column;gap:9px}
+.agerow{display:grid;grid-template-columns:96px 1fr 132px;gap:12px;align-items:center}
+.agerow .n{font-size:12.5px;font-weight:560;color:var(--ink-2)}
+.agetrack{height:22px;background:var(--surface-2);border-radius:5px;overflow:hidden;position:relative}
+.agefill{height:100%;border-radius:4px;min-width:2px;transition:width .35s cubic-bezier(.2,.7,.3,1)}
+.agerow .v{text-align:right;font-size:12.5px;font-weight:560}
+.agerow .v small{display:block;font-weight:460;color:var(--ink-3);font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* stacked mini bar */
+.stack{display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--surface-2);gap:2px}
+.stack span{transition:flex-grow .35s}
+
+/* ---------- alerts ---------- */
+.alert{display:flex;gap:11px;padding:11px 13px;border-radius:9px;margin-bottom:8px;
+  border:1px solid var(--border);background:var(--surface-2);align-items:flex-start}
+.alert .ico{flex:none;width:19px;height:19px;border-radius:5px;display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:#fff;margin-top:1px}
+.alert.crit{border-color:color-mix(in srgb,var(--crit) 38%,var(--border))}
+.alert.crit .ico{background:var(--crit)}
+.alert.warn{border-color:color-mix(in srgb,var(--warn) 45%,var(--border))}
+.alert.warn .ico{background:var(--warn);color:#3a2a00}
+.alert.info .ico{background:var(--accent)}
+.alert .t{font-weight:600;font-size:13px}
+.alert .d{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+
+/* ---------- tables ---------- */
+.tblwrap{overflow-x:auto;margin:0 -18px;padding:0 18px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+th{font-size:11px;font-weight:620;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);
+  position:sticky;top:0;background:var(--surface);cursor:pointer;user-select:none}
+th:hover{color:var(--ink)}
+th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover{background:var(--surface-2)}
+td.name{white-space:normal;min-width:190px;max-width:290px;font-weight:520}
+.pill{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;font-weight:620}
+.pill.crit{background:color-mix(in srgb,var(--crit) 15%,transparent);color:var(--crit)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 22%,transparent);color:#8a6100}
+.pill.ok{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+:root[data-theme="dark"] .pill.warn,
+:root:not([data-theme="light"]) .pill.warn{color:var(--warn)}
+.mini{display:flex;height:7px;width:78px;border-radius:99px;overflow:hidden;background:var(--surface-2);gap:1px}
+
+/* ---------- misc ---------- */
+.searchbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+input[type=search],input[type=text],select,textarea{font:inherit;font-size:13px;padding:6px 10px;
+  border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--ink)}
+input[type=search]{flex:1;min-width:180px}
+textarea{width:100%;min-height:140px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;resize:vertical}
+.empty{text-align:center;padding:36px 20px;color:var(--ink-3);font-size:13px}
+.tip{position:fixed;pointer-events:none;z-index:99;background:var(--ink);color:var(--bg);
+  padding:6px 9px;border-radius:6px;font-size:12px;font-weight:520;opacity:0;transition:opacity .1s;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);max-width:240px}
+.tip.on{opacity:1}
+.foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--border);
+  font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+details.adv{margin-top:12px}
+details.adv summary{cursor:pointer;font-size:12.5px;color:var(--ink-2);font-weight:540}
+.vcard{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--surface-2)}
+.vhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.err{background:color-mix(in srgb,var(--crit) 10%,var(--surface));border:1px solid var(--crit);
+  color:var(--ink);padding:12px 14px;border-radius:9px;margin-bottom:14px;font-size:13px}
+.hidden{display:none!important}
+
+/* ---------- print ---------- */
+@media print{
+  :root{--bg:#fff;--surface:#fff;--surface-2:#f4f4f2;--border:#ccc;--ink:#000;--ink-2:#333;--ink-3:#555}
+  body{background:#fff}
+  .noprint,.tabs,.acts,.drop,.searchbar{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .card,.kpi{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
+  .printblock{display:block!important}
+  .kpis{grid-template-columns:repeat(5,1fr);gap:7px}
+  .kpi{padding:9px 10px}
+  .kpi .val{font-size:18px}
+  .kpi .lbl{font-size:9.5px}
+  .kpi .foot{font-size:10.5px}
+  .card{margin-bottom:10px}
+  table{font-size:10.5px}
+  th,td{padding:4px 6px}
+  a{text-decoration:none;color:#000}
+  @page{margin:12mm}
+}
+@media (max-width:640px){
+  .agerow{grid-template-columns:78px 1fr 96px;gap:8px}
+  .kpi .val{font-size:21px}
+  .wrap{padding:14px 12px 56px}
+}
+</style>
+
+<div class="wrap">
+
+  <div class="top noprint">
+    <div class="brand">
+      <div class="logo">◧</div>
+      <div>
+        <h1>Analizador de Cartera</h1>
+        <div class="sub" id="subtitle">Carga el informe CARTERA POR EDADES de Oceanic</div>
+      </div>
+    </div>
+    <div class="acts" id="actions"></div>
+  </div>
+
+  <div id="errbox"></div>
+  <div id="demobanner" class="hidden"><div class="alert warn" style="margin-bottom:14px">
+    <div class="ico">i</div><div><div class="t">Estás viendo datos de ejemplo</div>
+    <div class="d">Cifras inventadas para mostrar cómo funciona. Carga tu informe de Oceanic para ver la cartera real.</div></div></div></div>
+
+  <div id="dropzone" class="drop">
+    <h2>Arrastra aquí el Excel de Oceanic</h2>
+    <p>El informe <strong>CARTERA POR EDADES</strong>, tal como sale del sistema. No hace falta limpiarlo ni darle formato.</p>
+    <button class="primary" id="pick">Seleccionar archivo</button>
+    <button id="demo">Ver una demostración</button>
+    <input type="file" id="file" accept=".xlsx,.xls" style="display:none">
+    <div class="hint">Todo el procesamiento ocurre dentro de tu navegador.<br>El archivo no se sube a ningún servidor.</div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="tabs noprint" role="tablist">
+      <button class="tab" role="tab" data-v="ger" aria-selected="true">Gerencia</button>
+      <button class="tab" role="tab" data-v="ven" aria-selected="false">Vendedores</button>
+      <button class="tab" role="tab" data-v="cli" aria-selected="false">Clientes</button>
+      <button class="tab" role="tab" data-v="fac" aria-selected="false">Facturas</button>
+    </div>
+    <div id="view-ger"></div>
+    <div id="view-ven" class="hidden"></div>
+    <div id="view-cli" class="hidden"></div>
+    <div id="view-fac" class="hidden"></div>
+  </div>
+
+  <div class="foot">
+    <span id="footinfo">Analizador de Cartera</span>
+    <span>Los datos nunca salen de este navegador</span>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   ANALIZADOR DE CARTERA - lector XLSX propio (sin librerias externas)
+   Lee el informe "CARTERA POR EDADES" de Oceanic y produce los reportes
+   de gerencia y de vendedores. Todo corre en el navegador del usuario.
+   ========================================================================== */
+
+/* ---- CONFIGURACION: tramos de vencimiento -------------------------------- */
+/* Para cambiar los cortes, edita SOLO esta lista (dias vencidos, limite alto) */
+const TRAMOS = [
+  { id:0, lbl:"Por vencer", hasta:0,        color:"var(--age0)" },
+  { id:1, lbl:"1 a 15",     hasta:15,       color:"var(--age1)" },
+  { id:2, lbl:"16 a 30",    hasta:30,       color:"var(--age2)" },
+  { id:3, lbl:"31 a 60",    hasta:60,       color:"var(--age3)" },
+  { id:4, lbl:"61 a 90",    hasta:90,       color:"var(--age4)" },
+  { id:5, lbl:"Más de 90",  hasta:Infinity, color:"var(--age5)" }
+];
+const tramoDe = d => TRAMOS.find(t => (d||0) <= t.hasta) || TRAMOS[TRAMOS.length-1];
+const SNAP_KEY = "cartera_snapshots_v1";
+const MAP_KEY  = "cartera_vendedores_v1";
+
+/* ---- utilidades ---------------------------------------------------------- */
+const $  = s => document.querySelector(s);
+const el = (t,c,h) => { const n=document.createElement(t); if(c)n.className=c; if(h!=null)n.innerHTML=h; return n; };
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num = v => { const n = typeof v==="number" ? v : parseFloat(String(v==null?"":v).replace(/,/g,"")); return isFinite(n)?n:null; };
+const money = v => "$" + Math.round(v||0).toLocaleString("es-CO");
+function moneyM(v){
+  const a = Math.abs(v||0);
+  if (a >= 1e9) return "$" + (v/1e6).toLocaleString("es-CO",{maximumFractionDigits:0}) + " M";
+  if (a >= 1e6) return "$" + (v/1e6).toLocaleString("es-CO",{maximumFractionDigits:1}) + " M";
+  return money(v);
+}
+const pct = (a,b) => !b ? "0%" : (a/b*100).toFixed(1).replace(".",",") + "%";
+const serial2date = s => s==null ? null : new Date(Date.UTC(1899,11,30) + Math.round(s)*864e5);
+const fdate = d => !d ? "" : String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear();
+const fdateLong = d => !d ? "" : d.getUTCDate()+" de "+["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][d.getUTCMonth()]+" de "+d.getUTCFullYear();
+
+function showErr(msg){ $("#errbox").innerHTML = '<div class="err"><strong>No se pudo leer el archivo.</strong><br>'+esc(msg)+'</div>'; }
+
+/* ============================================================================
+   1. LECTOR XLSX  (ZIP + inflate nativo del navegador + XML)
+   ========================================================================== */
+async function inflateRaw(bytes){
+  if (typeof DecompressionStream === "undefined") throw new Error("Tu navegador no soporta descompresión nativa. Usa Chrome o Edge actualizado.");
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function unzip(buffer){
+  const dv = new DataView(buffer), u8 = new Uint8Array(buffer);
+  // localizar End Of Central Directory
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--){
+    if (dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("El archivo no parece ser un .xlsx válido: no se encontró la estructura ZIP.");
+  const count = dv.getUint16(eocd + 10, true);
+  let off = dv.getUint32(eocd + 16, true);
+  const files = {};
+  const dec = new TextDecoder("utf-8");
+  for (let i = 0; i < count; i++){
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    const method  = dv.getUint16(off + 10, true);
+    const csize   = dv.getUint32(off + 20, true);
+    const nameLen = dv.getUint16(off + 28, true);
+    const extLen  = dv.getUint16(off + 30, true);
+    const cmtLen  = dv.getUint16(off + 32, true);
+    const lho     = dv.getUint32(off + 42, true);
+    const name    = dec.decode(u8.subarray(off + 46, off + 46 + nameLen));
+    // cabecera local -> desplazamiento real de los datos
+    const lNameLen = dv.getUint16(lho + 26, true);
+    const lExtLen  = dv.getUint16(lho + 28, true);
+    const start    = lho + 30 + lNameLen + lExtLen;
+    files[name] = { method, raw: u8.subarray(start, start + csize) };
+    off += 46 + nameLen + extLen + cmtLen;
+  }
+  const out = {};
+  for (const [name, f] of Object.entries(files)){
+    if (!/\.(xml|rels)$/i.test(name)) continue;
+    out[name] = dec.decode(f.method === 0 ? f.raw : await inflateRaw(f.raw));
+  }
+  return out;
+}
+
+/** Devuelve las filas de la primera hoja como array de objetos {A:val,B:val,...} */
+async function readSheet(buffer){
+  const files = await unzip(buffer);
+  const parser = new DOMParser();
+  const NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+
+  // sharedStrings
+  let shared = [];
+  const ssName = Object.keys(files).find(n => /sharedStrings\.xml$/i.test(n));
+  if (ssName){
+    const doc = parser.parseFromString(files[ssName], "application/xml");
+    shared = Array.from(doc.getElementsByTagNameNS(NS,"si")).map(si =>
+      Array.from(si.getElementsByTagNameNS(NS,"t")).map(t => t.textContent).join(""));
+  }
+  // hoja
+  const shName = Object.keys(files).find(n => /^xl\/worksheets\/.+\.xml$/i.test(n));
+  if (!shName) throw new Error("El archivo no contiene ninguna hoja de cálculo.");
+  const doc = parser.parseFromString(files[shName], "application/xml");
+  if (doc.getElementsByTagName("parsererror").length) throw new Error("El contenido del Excel está dañado.");
+
+  const rows = [];
+  for (const r of doc.getElementsByTagNameNS(NS,"row")){
+    const cells = {};
+    for (const c of r.getElementsByTagNameNS(NS,"c")){
+      const col = (c.getAttribute("r")||"").replace(/\d+/g,"");
+      const t = c.getAttribute("t");
+      let val = null;
+      const is = c.getElementsByTagNameNS(NS,"is")[0];
+      const v  = c.getElementsByTagNameNS(NS,"v")[0];
+      if (is) val = Array.from(is.getElementsByTagNameNS(NS,"t")).map(x=>x.textContent).join("");
+      else if (v) val = (t === "s") ? (shared[+v.textContent] ?? "") : v.textContent;
+      if (val !== null && String(val).trim() !== "") cells[col] = String(val).trim();
+    }
+    if (Object.keys(cells).length) rows.push(cells);
+  }
+  if (!rows.length) throw new Error("La hoja está vacía.");
+  return rows;
+}
+
+/* ============================================================================
+   2. PARSER DEL FORMATO OCEANIC
+   Estructura: [SUCURSAL] > [cliente: NIT|nombre|contacto|tipo] > facturas > subtotal
+   Columnas de detalle:
+     A suc  B documento  C tipo  D ?  E codigo  F f.factura  G f.vencimiento
+     H valor  I abonos   J dias vencidos  K..O buckets Oceanic  P por vencer  Q saldo
+   ========================================================================== */
+function parseOceanic(rows){
+  const facturas = [];
+  let cli = null, sucursal = "", clientes = new Map(), totalArchivo = null;
+
+  const esDetalle = c =>
+    num(c.F) !== null && num(c.G) !== null && num(c.H) !== null && num(c.Q) !== null &&
+    c.C && c.C.length <= 3 && isNaN(Number(c.C));
+
+  for (const c of rows){
+    const A = c.A || "";
+    if (/^SUCURSAL/i.test(A)) { sucursal = c.B || ""; continue; }
+    if (/^TOTAL/i.test(A))    { const t = num(c.I); if (t) totalArchivo = t; continue; }
+
+    if (esDetalle(c)){
+      if (!cli) continue;
+      const dias  = num(c.J) || 0;
+      const saldo = num(c.Q) || 0;
+      if (Math.abs(saldo) < 0.005) continue;               // factura ya cancelada
+      facturas.push({
+        nit: cli.nit, cliente: cli.nombre, sucursal,
+        doc: c.B || "", tipo: c.C, zona: c.E || "",
+        fFactura: serial2date(num(c.F)), fVence: serial2date(num(c.G)),
+        valor: num(c.H) || 0, abonos: num(c.I) || 0,
+        dias, saldo, tramo: tramoDe(dias)
+      });
+      continue;
+    }
+    // encabezado de cliente: NIT en A + nombre de texto en B
+    if (/^\d{5,}$/.test(A) && c.B && isNaN(Number(c.B))){
+      cli = { nit:A, nombre:c.B, contacto:c.C||"", tipo:c.D||"", sucursal };
+      clientes.set(A, cli);
+    }
+  }
+  if (!facturas.length) throw new Error("No se encontraron facturas. Verifica que sea el informe CARTERA POR EDADES exportado a Excel.");
+
+  // fecha de corte = valor mas frecuente de (vencimiento + dias vencidos)
+  const votos = new Map();
+  for (const f of facturas){
+    if (f.dias > 0 && f.fVence){
+      const k = f.fVence.getTime() + f.dias * 864e5;
+      votos.set(k, (votos.get(k) || 0) + 1);
+    }
+  }
+  let corte = null, mejor = 0;
+  for (const [k,n] of votos) if (n > mejor){ mejor = n; corte = new Date(k); }
+  if (!corte) corte = facturas.reduce((m,f)=> f.fFactura>m ? f.fFactura : m, facturas[0].fFactura);
+
+  return { facturas, clientes, corte, totalArchivo, sucursal };
+}
+
+/* ============================================================================
+   3. AGREGACION
+   ========================================================================== */
+function analizar(data, mapaVend){
+  const { facturas } = data;
+  const porTramo = TRAMOS.map(t => ({ ...t, valor:0, facturas:0 }));
+  const cli = new Map();
+
+  for (const f of facturas){
+    const t = porTramo[f.tramo.id];
+    t.valor += f.saldo; t.facturas++;
+
+    let c = cli.get(f.nit);
+    if (!c){
+      c = { nit:f.nit, nombre:f.cliente, zona:f.zona,
+            vendedor: (mapaVend && mapaVend[f.nit]) || "Sin asignar",
+            total:0, vencido:0, porVencer:0, mas90:0, tramos:TRAMOS.map(()=>0),
+            facturas:[], maxDias:0, docVencidos:0 };
+      cli.set(f.nit, c);
+    }
+    c.total += f.saldo;
+    c.tramos[f.tramo.id] += f.saldo;
+    if (f.dias > 0){ c.vencido += f.saldo; c.docVencidos++; } else c.porVencer += f.saldo;
+    if (f.dias > 90) c.mas90 += f.saldo;
+    c.maxDias = Math.max(c.maxDias, f.dias);
+    c.facturas.push(f);
+  }
+
+  const clientes = [...cli.values()];
+  clientes.forEach(c => { c.pctVencido = c.total ? c.vencido / c.total : 0; c.facturas.sort((a,b)=>b.dias-a.dias); });
+
+  const total     = clientes.reduce((s,c)=>s+c.total,0);
+  const vencido   = clientes.reduce((s,c)=>s+c.vencido,0);
+  const mas90     = clientes.reduce((s,c)=>s+c.mas90,0);
+  const porVencer = total - vencido;
+
+  // dias de mora ponderados por peso (edad promedio del vencido)
+  let pond = 0;
+  for (const f of facturas) if (f.dias > 0) pond += f.dias * f.saldo;
+  const moraProm = vencido ? pond / vencido : 0;
+
+  const rank = [...clientes].sort((a,b)=>b.vencido-a.vencido);
+  const top5  = rank.slice(0,5).reduce((s,c)=>s+c.vencido,0);
+  const top10 = rank.slice(0,10).reduce((s,c)=>s+c.vencido,0);
+
+  // vendedores
+  const vmap = new Map();
+  for (const c of clientes){
+    let v = vmap.get(c.vendedor);
+    if (!v){ v = { nombre:c.vendedor, total:0, vencido:0, mas90:0, clientes:[], tramos:TRAMOS.map(()=>0) }; vmap.set(c.vendedor, v); }
+    v.total += c.total; v.vencido += c.vencido; v.mas90 += c.mas90;
+    c.tramos.forEach((x,i)=> v.tramos[i] += x);
+    v.clientes.push(c);
+  }
+  const vendedores = [...vmap.values()].sort((a,b)=>b.vencido-a.vencido);
+  vendedores.forEach(v => { v.pctVencido = v.total ? v.vencido/v.total : 0;
+                            v.clientes.sort((a,b)=>b.vencido-a.vencido); });
+
+  return { ...data, clientes_raw:data.clientes, porTramo, clientes, vendedores,
+           total, vencido, porVencer, mas90, moraProm, top5, top10, rank,
+           enMora: clientes.filter(c=>c.vencido>1).length };
+}
+
+/* ---- prioridad de cobro: monto x severidad de la mora --------------------- */
+const prioridad = c => c.vencido * (1 + Math.min(c.maxDias, 365) / 90);
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   4. ESTADO Y SNAPSHOTS SEMANALES
+   ========================================================================== */
+let A = null;              // analisis vigente
+let PREV = null;           // snapshot de la semana anterior
+let MAPA = leerMapa();
+
+function leerMapa(){ try { return JSON.parse(localStorage.getItem(MAP_KEY)) || {}; } catch(e){ return {}; } }
+function guardarMapa(m){ MAPA = m; try { localStorage.setItem(MAP_KEY, JSON.stringify(m)); } catch(e){} }
+function leerSnaps(){ try { return JSON.parse(localStorage.getItem(SNAP_KEY)) || []; } catch(e){ return []; } }
+
+function guardarSnap(a){
+  let s = leerSnaps();
+  const iso = a.corte.toISOString().slice(0,10);
+  const snap = { corte:iso, total:a.total, vencido:a.vencido, mas90:a.mas90,
+    tramos:a.porTramo.map(t=>t.valor), moraProm:a.moraProm,
+    clientes:Object.fromEntries(a.clientes.map(c=>[c.nit,{n:c.nombre,t:c.total,v:c.vencido,m:c.mas90}])) };
+  s = s.filter(x => x.corte !== iso);
+  s.push(snap);
+  s.sort((x,y)=> x.corte < y.corte ? -1 : 1);
+  s = s.slice(-14);                                     // ~3 meses de historia
+  try { localStorage.setItem(SNAP_KEY, JSON.stringify(s)); } catch(e){}
+  PREV = s.filter(x => x.corte < iso).pop() || null;
+}
+
+/* elemento de variacion contra la semana anterior */
+function deltaHTML(actual, anterior, invertir){
+  if (anterior == null) return "";
+  const d = actual - anterior;
+  if (Math.abs(d) < Math.max(1, Math.abs(anterior) * 0.001)) return '<span class="delta flat">sin cambio</span>';
+  const sube = d > 0, malo = invertir ? !sube : sube;
+  return '<span class="delta '+(malo?"up":"down")+'">'+(sube?"▲":"▼")+" "+moneyM(Math.abs(d))+"</span>";
+}
+
+/* ============================================================================
+   5. MOTOR DE ALERTAS  -> "que requiere decision esta semana"
+   ========================================================================== */
+function alertas(a){
+  const out = [];
+  const share = v => a.vencido ? v / a.vencido : 0;
+
+  if (a.total){
+    const p = a.vencido / a.total;
+    if (p >= 0.35)      out.push({n:"crit", i:"!", t:"Cartera vencida en nivel crítico: "+pct(a.vencido,a.total)+" del total",
+      d:"Son "+money(a.vencido)+" fuera de plazo. Por encima del 35% la operación se está financiando con la plata de los clientes."});
+    else if (p >= 0.20) out.push({n:"warn", i:"!", t:"Cartera vencida alta: "+pct(a.vencido,a.total),
+      d:money(a.vencido)+" fuera de plazo. El rango sano está por debajo del 20%."});
+  }
+  if (a.mas90 > 0){
+    const p = a.mas90 / a.total;
+    out.push({n: p>=0.08 ? "crit":"warn", i:"!",
+      t:"Más de 90 días: "+money(a.mas90)+" ("+pct(a.mas90,a.total)+" del total)",
+      d:"Tramo con menor probabilidad de recaudo. Definir si pasa a cobro jurídico o a provisión."});
+  }
+  if (a.rank.length >= 5 && share(a.top5) >= 0.5){
+    out.push({n:"warn", i:"◉", t:"Riesgo concentrado: 5 clientes tienen el "+(share(a.top5)*100).toFixed(0)+"% del vencido",
+      d:"Encabeza "+esc(a.rank[0].nombre)+" con "+money(a.rank[0].vencido)+". Gestionar estos 5 mueve más caja que gestionar los otros "+(a.clientes.length-5)+"."});
+  }
+  // clientes con toda su cartera vencida y monto relevante
+  const umbral = Math.max(a.total * 0.005, 3e6);
+  const totVenc = a.clientes.filter(c => c.pctVencido > 0.999 && c.vencido >= umbral)
+                            .sort((x,y)=>y.vencido-x.vencido);
+  if (totVenc.length){
+    out.push({n:"crit", i:"!", t:totVenc.length+" cliente(s) con el 100% de su cartera vencida",
+      d:totVenc.slice(0,4).map(c=>esc(c.nombre)+" ("+money(c.vencido)+", "+c.maxDias+" días)").join(" · ")+
+        (totVenc.length>4?" y "+(totVenc.length-4)+" mas":"")+". Candidatos a bloqueo de despacho."});
+  }
+  // facturas muy antiguas
+  const viejas = a.facturas.filter(f => f.dias > 365).sort((x,y)=>y.dias-x.dias);
+  if (viejas.length){
+    const v = viejas.reduce((s,f)=>s+f.saldo,0);
+    out.push({n:"crit", i:"!", t:viejas.length+" factura(s) con más de un año de vencidas: "+money(v),
+      d:"La más antigua: "+esc(viejas[0].cliente)+", factura "+esc(viejas[0].doc)+", "+viejas[0].dias+" días. Revisar si es recuperable o si debe provisionarse."});
+  }
+  // variacion semanal
+  if (PREV){
+    const d = a.vencido - PREV.vencido;
+    if (Math.abs(d) > a.total * 0.01){
+      out.push({n: d>0?"warn":"info", i: d>0?"▲":"▼",
+        t:"El vencido "+(d>0?"subió":"bajó")+" "+money(Math.abs(d))+" frente al corte del "+PREV.corte,
+        d: d>0 ? "Entraron más facturas en mora de lo que se recaudó en la semana."
+               : "Buena señal: el recaudo superó a las facturas que cayeron en mora."});
+    }
+    const emp = a.clientes.map(c => {
+      const p = PREV.clientes[c.nit];
+      return p ? { c, d:c.vencido - p.v } : null;
+    }).filter(x => x && x.d > umbral).sort((x,y)=>y.d-x.d);
+    if (emp.length) out.push({n:"warn", i:"▲", t:emp.length+" cliente(s) empeoraron esta semana",
+      d:emp.slice(0,4).map(x=>esc(x.c.nombre)+" +"+moneyM(x.d)).join(" · ")+(emp.length>4?" y "+(emp.length-4)+" mas":"")});
+  }
+  if (!out.length) out.push({n:"info", i:"✓", t:"Sin alertas críticas en este corte", d:"La cartera está dentro de los parámetros definidos."});
+  return out;
+}
+
+/* ============================================================================
+   6. COMPONENTES DE RENDER
+   ========================================================================== */
+function kpi(lbl, val, foot, bad){
+  return '<div class="kpi'+(bad?" bad":"")+'"><div class="lbl">'+esc(lbl)+'</div>'+
+         '<div class="val num">'+val+'</div><div class="foot">'+(foot||"")+'</div></div>';
+}
+
+/* barras horizontales de distribucion por edades (ordinal, con hover) */
+function barrasEdades(tramos, total){
+  const max = Math.max(...tramos.map(t=>t.valor), 1);
+  let h = '<div class="ages">';
+  for (const t of tramos){
+    const w = Math.max(t.valor / max * 100, t.valor > 0 ? 1.5 : 0);
+    h += '<div class="agerow">'+
+      '<div class="n">'+esc(t.lbl)+'</div>'+
+      '<div class="agetrack"><div class="agefill" style="width:'+w.toFixed(2)+'%;background:'+t.color+'" '+
+        'data-tip="'+esc(t.lbl)+': '+money(t.valor)+' — '+pct(t.valor,total)+' del total — '+t.facturas+' facturas"></div></div>'+
+      '<div class="v num">'+moneyM(t.valor)+'<small>'+pct(t.valor,total)+' · '+t.facturas+' fact.</small></div>'+
+    '</div>';
+  }
+  h += '</div><div class="legend">';
+  for (const t of tramos) h += '<span><i style="background:'+t.color+'"></i>'+esc(t.lbl)+'</span>';
+  h += '<span style="margin-left:auto;color:var(--ink-3)">Días vencidos al corte</span></div>';
+  return h;
+}
+
+/* barra apilada compacta (usada por cliente y por vendedor) */
+function mini(tramos){
+  const tot = tramos.reduce((s,v)=>s+v,0) || 1;
+  let h = '<div class="mini">';
+  TRAMOS.forEach((t,i) => { if (tramos[i] > 0)
+    h += '<span style="flex:'+(tramos[i]/tot)+';background:'+t.color+'" data-tip="'+esc(t.lbl)+': '+money(tramos[i])+'"></span>'; });
+  return h + '</div>';
+}
+
+function tablaOrdenable(cols, filas, idDefecto){
+  const id = "t" + Math.random().toString(36).slice(2,8);
+  let h = '<div class="tblwrap"><table id="'+id+'"><thead><tr>';
+  cols.forEach((c,i) => h += '<th class="'+(c.r?"r":"")+'" data-i="'+i+'" data-n="'+(c.n?1:0)+'">'+esc(c.lbl)+'</th>');
+  h += '</tr></thead><tbody>';
+  filas.forEach(f => {
+    h += "<tr>";
+    f.forEach((v,i) => h += '<td class="'+(cols[i].r?"r ":"")+(cols[i].cls||"")+'" data-s="'+esc(v.s!=null?v.s:"")+'">'+(v.h!=null?v.h:esc(v))+'</td>');
+    h += "</tr>";
+  });
+  return h + "</tbody></table></div>";
+}
+
+/* ============================================================================
+   7. VISTA GERENCIA
+   ========================================================================== */
+function renderGerencia(){
+  const a = A;
+  let h = "";
+
+  /* encabezado imprimible */
+  h += '<div class="card"><header><div>'+
+       '<h2>Informe de cartera</h2>'+
+       '<div class="note">Corte al '+fdateLong(a.corte)+' · '+a.clientes.length+' clientes · '+a.facturas.length+' facturas'+
+       (PREV ? ' · comparado con el corte del '+PREV.corte : ' · primer corte registrado')+'</div>'+
+       '</div><div class="note noprint">'+(a.totalArchivo && Math.abs(a.totalArchivo-a.total)<2 ? "✓ Cuadrado con el total de Oceanic" : "")+'</div></header>';
+
+  h += '<div class="kpis" style="margin:0">';
+  h += kpi("Cartera total", moneyM(a.total),
+        (PREV?deltaHTML(a.total,PREV.total,true):"")+'<span style="color:var(--ink-3)">'+money(a.total)+'</span>');
+  h += kpi("Vencida", moneyM(a.vencido),
+        '<strong>'+pct(a.vencido,a.total)+' del total</strong> '+(PREV?deltaHTML(a.vencido,PREV.vencido,true):""),
+        a.vencido/a.total >= 0.35);
+  h += kpi("Más de 90 días", moneyM(a.mas90),
+        pct(a.mas90,a.total)+' del total '+(PREV?deltaHTML(a.mas90,PREV.mas90,true):""),
+        a.mas90/a.total >= 0.08);
+  h += kpi("Mora promedio", Math.round(a.moraProm)+" días",
+        'ponderada por monto'+(PREV&&PREV.moraProm?' · antes '+Math.round(PREV.moraProm)+' d':''));
+  h += kpi("Clientes en mora", a.enMora+" / "+a.clientes.length,
+        pct(a.enMora,a.clientes.length)+' de la base');
+  h += '</div></div>';
+
+  /* alertas */
+  h += '<div class="card"><header><h2>Requiere decisión</h2><span class="note">Generado automáticamente a partir del corte</span></header>';
+  for (const al of alertas(a))
+    h += '<div class="alert '+al.n+'"><div class="ico">'+al.i+'</div><div><div class="t">'+al.t+'</div><div class="d">'+al.d+'</div></div></div>';
+  h += '</div>';
+
+  /* distribucion por edades */
+  h += '<div class="card"><header><h2>Distribución por edades</h2>'+
+       '<span class="note">'+moneyM(a.porVencer)+' al día · '+moneyM(a.vencido)+' vencido</span></header>'+
+       barrasEdades(a.porTramo, a.total)+'</div>';
+
+  /* concentracion */
+  const nc = a.rank.length;
+  h += '<div class="card"><header><h2>Concentración del riesgo</h2>'+
+       '<span class="note">sobre '+moneyM(a.vencido)+' vencidos</span></header>'+
+       '<div class="kpis" style="margin:0 0 14px">'+
+       kpi("Top 5 clientes", pct(a.top5,a.vencido), money(a.top5)) +
+       kpi("Top 10 clientes", pct(a.top10,a.vencido), money(a.top10)) +
+       kpi("Resto ("+Math.max(nc-10,0)+")", pct(a.vencido-a.top10,a.vencido), money(a.vencido-a.top10)) +
+       '</div>';
+
+  const cols = [
+    {lbl:"#",r:true,n:true},{lbl:"Cliente",cls:"name"},{lbl:"Vendedor"},
+    {lbl:"Total",r:true,n:true},{lbl:"Vencido",r:true,n:true},{lbl:"% venc.",r:true,n:true},
+    {lbl:"Más de 90",r:true,n:true},{lbl:"Días",r:true,n:true},{lbl:"Composición"}
+  ];
+  const filas = a.rank.slice(0,20).map((c,i)=>[
+    {h:String(i+1),s:i+1}, {h:esc(c.nombre)+'<br><small style="color:var(--ink-3)">NIT '+esc(c.nit)+'</small>', s:c.nombre},
+    esc(c.vendedor),
+    {h:money(c.total),s:c.total}, {h:"<strong>"+money(c.vencido)+"</strong>",s:c.vencido},
+    {h:'<span class="pill '+(c.pctVencido>=.7?"crit":c.pctVencido>=.3?"warn":"ok")+'">'+pct(c.vencido,c.total)+'</span>',s:c.pctVencido},
+    {h:c.mas90?money(c.mas90):'<span style="color:var(--ink-3)">—</span>',s:c.mas90},
+    {h:String(c.maxDias),s:c.maxDias}, {h:mini(c.tramos),s:0}
+  ]);
+  h += tablaOrdenable(cols, filas) + '</div>';
+  $("#view-ger").innerHTML = h;
+}
+
+/* ============================================================================
+   8. VISTA VENDEDORES
+   ========================================================================== */
+function renderVendedores(){
+  const a = A;
+  const sinMapa = a.vendedores.length === 1 && a.vendedores[0].nombre === "Sin asignar";
+  let h = "";
+
+  if (sinMapa){
+    h += '<div class="card"><header><h2>Falta asignar los vendedores</h2></header>'+
+      '<p style="color:var(--ink-2);margin:0 0 12px">El informe <strong>CARTERA POR EDADES</strong> de Oceanic no trae el vendedor '+
+      'asignado a cada cliente, así que hay que cargarlo una sola vez. Queda guardado en este navegador y se aplica a todos los cortes siguientes.</p>'+
+      '<ol style="color:var(--ink-2);font-size:13px;padding-left:20px;margin:0 0 14px">'+
+      '<li>Copia la lista de clientes con el botón de abajo.</li>'+
+      '<li>Pégala en Excel y escribe el vendedor en la tercera columna.</li>'+
+      '<li>Copia las tres columnas y pégalas aquí.</li></ol>'+
+      '<div class="searchbar"><button id="copynits">Copiar los '+a.clientes.length+' clientes</button></div>'+
+      '<textarea id="mapin" placeholder="NIT&#9;Cliente&#9;Vendedor&#10;890315430&#9;AGRICOLA COLOMBIANA SA&#9;Juan Perez"></textarea>'+
+      '<div class="searchbar" style="margin-top:10px"><button class="primary" id="mapsave">Guardar asignación</button>'+
+      '<button id="mapclear">Borrar asignación guardada</button></div></div>';
+    $("#view-ven").innerHTML = h;
+    $("#copynits").onclick = () => copiar(a.clientes.map(c=>c.nit+"\t"+c.nombre+"\t").join("\n"), $("#copynits"));
+    $("#mapsave").onclick = () => {
+      const m = {...MAPA};
+      let n = 0;
+      for (const ln of $("#mapin").value.split(/\r?\n/)){
+        const p = ln.split(/\t|;|\|/).map(x=>x.trim());
+        const nit = (p[0]||"").replace(/\D/g,"");
+        const v = (p[2] || p[1] || "").trim();
+        if (nit && v && isNaN(Number(v))){ m[nit] = v; n++; }
+      }
+      if (!n) return alert("No se reconoció ninguna fila. Cada línea debe ser: NIT, cliente, vendedor (separados por tabulación).");
+      guardarMapa(m); recalcular(); alert(n+" clientes asignados.");
+    };
+    $("#mapclear").onclick = () => { if (confirm("¿Borrar la asignación de vendedores guardada?")){ guardarMapa({}); recalcular(); } };
+    return;
+  }
+
+  h += '<div class="card"><header><div><h2>Cartera por vendedor</h2>'+
+       '<div class="note">Corte al '+fdate(a.corte)+' · ordenado por monto vencido</div></div>'+
+       '<button class="noprint" id="mapedit">Editar asignación</button></header>';
+  const cols = [{lbl:"Vendedor",cls:"name"},{lbl:"Clientes",r:true,n:true},{lbl:"Total",r:true,n:true},
+    {lbl:"Vencido",r:true,n:true},{lbl:"% venc.",r:true,n:true},{lbl:"Más de 90",r:true,n:true},{lbl:"Composición"}];
+  h += tablaOrdenable(cols, a.vendedores.map(v=>[
+    {h:"<strong>"+esc(v.nombre)+"</strong>",s:v.nombre},{h:String(v.clientes.length),s:v.clientes.length},
+    {h:money(v.total),s:v.total},{h:"<strong>"+money(v.vencido)+"</strong>",s:v.vencido},
+    {h:'<span class="pill '+(v.pctVencido>=.5?"crit":v.pctVencido>=.25?"warn":"ok")+'">'+pct(v.vencido,v.total)+'</span>',s:v.pctVencido},
+    {h:v.mas90?money(v.mas90):"—",s:v.mas90},{h:mini(v.tramos),s:0}
+  ])) + '</div>';
+
+  /* una hoja de cobro por vendedor */
+  for (const v of a.vendedores){
+    const lista = [...v.clientes].filter(c=>c.vencido>1).sort((x,y)=>prioridad(y)-prioridad(x));
+    h += '<div class="card"><div class="vhead"><div><h2>'+esc(v.nombre)+'</h2>'+
+      '<div class="note">'+v.clientes.length+' clientes · '+moneyM(v.total)+' en cartera · '+
+      '<strong>'+moneyM(v.vencido)+' vencido ('+pct(v.vencido,v.total)+')</strong></div></div>'+
+      '<button class="noprint" data-copyv="'+esc(v.nombre)+'">Copiar para Excel</button></div>';
+    if (!lista.length){ h += '<div class="empty">Sin cartera vencida. Nada que cobrar esta semana.</div></div>'; continue; }
+    h += '<div class="note" style="margin-bottom:8px">Orden de llamada sugerido: monto vencido, pesado por los días de mora.</div>';
+    h += tablaOrdenable(
+      [{lbl:"Prio",r:true,n:true},{lbl:"Cliente",cls:"name"},{lbl:"Teléfono"},{lbl:"Vencido",r:true,n:true},
+       {lbl:"Más de 90",r:true,n:true},{lbl:"Días",r:true,n:true},{lbl:"Fact.",r:true,n:true},{lbl:"Composición"}],
+      lista.map((c,i)=>{
+        const info = A.clientes_raw.get(c.nit);
+        const tel = info ? (String(info.contacto).match(/Tel\.?\s*([\d\-\s]{6,})/)||[,""])[1].trim() : "";
+        return [{h:String(i+1),s:i+1},
+          {h:esc(c.nombre)+'<br><small style="color:var(--ink-3)">NIT '+esc(c.nit)+'</small>',s:c.nombre},
+          esc(tel||"—"), {h:"<strong>"+money(c.vencido)+"</strong>",s:c.vencido},
+          {h:c.mas90?money(c.mas90):"—",s:c.mas90},{h:String(c.maxDias),s:c.maxDias},
+          {h:String(c.docVencidos),s:c.docVencidos},{h:mini(c.tramos),s:0}];
+      })) + '</div>';
+  }
+  $("#view-ven").innerHTML = h;
+  const me = $("#mapedit"); if (me) me.onclick = () => { guardarMapa({}); recalcular(); };
+  document.querySelectorAll("[data-copyv]").forEach(b => b.onclick = () => {
+    const v = a.vendedores.find(x=>x.nombre===b.dataset.copyv);
+    const rows = [["NIT","Cliente","Vencido","Más de 90","Días mora","Facturas vencidas"]]
+      .concat([...v.clientes].filter(c=>c.vencido>1).sort((x,y)=>prioridad(y)-prioridad(x))
+        .map(c=>[c.nit,c.nombre,Math.round(c.vencido),Math.round(c.mas90),c.maxDias,c.docVencidos]));
+    copiar(rows.map(r=>r.join("\t")).join("\n"), b);
+  });
+}
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   9. VISTAS DE DETALLE
+   ========================================================================== */
+function renderClientes(){
+  const a = A;
+  let h = '<div class="card"><header><div><h2>Todos los clientes</h2>'+
+    '<div class="note">'+a.clientes.length+' clientes · clic en los encabezados para reordenar</div></div>'+
+    '<button class="noprint" id="copycli">Copiar para Excel</button></header>'+
+    '<div class="searchbar"><input type="search" id="qcli" placeholder="Buscar por nombre o NIT..."></div>';
+  const cols = [{lbl:"Cliente",cls:"name"},{lbl:"NIT"},{lbl:"Vendedor"},{lbl:"Zona"},
+    {lbl:"Por vencer",r:true,n:true},{lbl:"1-15",r:true,n:true},{lbl:"16-30",r:true,n:true},
+    {lbl:"31-60",r:true,n:true},{lbl:"61-90",r:true,n:true},{lbl:"+90",r:true,n:true},
+    {lbl:"Total",r:true,n:true},{lbl:"Vencido",r:true,n:true},{lbl:"Días",r:true,n:true}];
+  const filas = [...a.clientes].sort((x,y)=>y.vencido-x.vencido).map(c=>[
+    {h:esc(c.nombre),s:c.nombre}, esc(c.nit), esc(c.vendedor), esc(c.zona),
+    ...c.tramos.map(v=>({h:v?money(v):'<span style="color:var(--ink-3)">—</span>',s:v})),
+    {h:money(c.total),s:c.total},{h:"<strong>"+money(c.vencido)+"</strong>",s:c.vencido},
+    {h:String(c.maxDias),s:c.maxDias}]);
+  h += tablaOrdenable(cols, filas) + '</div>';
+  $("#view-cli").innerHTML = h;
+  $("#qcli").oninput = e => filtrar("#view-cli", e.target.value);
+  $("#copycli").onclick = b => {
+    const rows = [["Cliente","NIT","Vendedor","Zona",...TRAMOS.map(t=>t.lbl),"Total","Vencido","Días mora"]]
+      .concat([...a.clientes].sort((x,y)=>y.vencido-x.vencido)
+        .map(c=>[c.nombre,c.nit,c.vendedor,c.zona,...c.tramos.map(Math.round),Math.round(c.total),Math.round(c.vencido),c.maxDias]));
+    copiar(rows.map(r=>r.join("\t")).join("\n"), $("#copycli"));
+  };
+}
+
+function renderFacturas(){
+  const a = A;
+  let h = '<div class="card"><header><div><h2>Facturas pendientes</h2>'+
+    '<div class="note">'+a.facturas.length+' documentos con saldo al '+fdate(a.corte)+'</div></div>'+
+    '<button class="noprint" id="copyfac">Copiar para Excel</button></header>'+
+    '<div class="searchbar"><input type="search" id="qfac" placeholder="Buscar por cliente, NIT o número de factura..."></div>';
+  const cols = [{lbl:"Cliente",cls:"name"},{lbl:"Factura"},{lbl:"Emitida"},{lbl:"Vence"},
+    {lbl:"Días",r:true,n:true},{lbl:"Tramo"},{lbl:"Valor",r:true,n:true},{lbl:"Abonos",r:true,n:true},{lbl:"Saldo",r:true,n:true}];
+  const filas = [...a.facturas].sort((x,y)=>y.dias-x.dias || y.saldo-x.saldo).map(f=>[
+    {h:esc(f.cliente),s:f.cliente}, esc(f.doc),
+    {h:fdate(f.fFactura),s:f.fFactura?f.fFactura.getTime():0},
+    {h:fdate(f.fVence),s:f.fVence?f.fVence.getTime():0},
+    {h:String(f.dias),s:f.dias},
+    {h:'<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:8px;height:8px;border-radius:2px;background:'+f.tramo.color+';display:inline-block"></i>'+esc(f.tramo.lbl)+'</span>',s:f.tramo.id},
+    {h:money(f.valor),s:f.valor},{h:f.abonos?money(f.abonos):"—",s:f.abonos},
+    {h:"<strong>"+money(f.saldo)+"</strong>",s:f.saldo}]);
+  h += tablaOrdenable(cols, filas) + '</div>';
+  $("#view-fac").innerHTML = h;
+  $("#qfac").oninput = e => filtrar("#view-fac", e.target.value);
+  $("#copyfac").onclick = () => {
+    const rows = [["Cliente","NIT","Factura","Emitida","Vence","Días","Tramo","Valor","Abonos","Saldo"]]
+      .concat([...a.facturas].sort((x,y)=>y.dias-x.dias)
+        .map(f=>[f.cliente,f.nit,f.doc,fdate(f.fFactura),fdate(f.fVence),f.dias,f.tramo.lbl,
+                 Math.round(f.valor),Math.round(f.abonos),Math.round(f.saldo)]));
+    copiar(rows.map(r=>r.join("\t")).join("\n"), $("#copyfac"));
+  };
+}
+
+function filtrar(scope, q){
+  q = q.trim().toLowerCase();
+  document.querySelectorAll(scope + " tbody tr").forEach(tr => {
+    tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+/* ============================================================================
+   10. INTERACCION: orden, tooltip, copiar, pestañas
+   ========================================================================== */
+document.addEventListener("click", e => {
+  const th = e.target.closest("th[data-i]");
+  if (!th) return;
+  const tbl = th.closest("table"), i = +th.dataset.i, esNum = th.dataset.n === "1";
+  const asc = tbl.dataset.sc === String(i) ? tbl.dataset.sd !== "asc" : !esNum;
+  tbl.dataset.sc = i; tbl.dataset.sd = asc ? "asc" : "desc";
+  const tb = tbl.tBodies[0];
+  const key = tr => {
+    const td = tr.cells[i]; const s = td.dataset.s;
+    return esNum ? (parseFloat(s) || 0) : (s || td.textContent).toLowerCase();
+  };
+  [...tb.rows].sort((x,y) => { const a=key(x), b=key(y);
+    return (a<b?-1:a>b?1:0) * (asc?1:-1); }).forEach(tr => tb.appendChild(tr));
+});
+
+const tip = $("#tip");
+document.addEventListener("mouseover", e => {
+  const t = e.target.closest("[data-tip]");
+  if (!t) return;
+  tip.textContent = t.dataset.tip; tip.classList.add("on");
+});
+document.addEventListener("mousemove", e => {
+  if (!tip.classList.contains("on")) return;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.min(e.clientX + 12, innerWidth - w - 8) + "px";
+  tip.style.top  = Math.max(e.clientY - h - 10, 8) + "px";
+});
+document.addEventListener("mouseout", e => {
+  if (e.target.closest("[data-tip]")) tip.classList.remove("on");
+});
+
+async function copiar(texto, btn){
+  const ok = () => { if (!btn) return; const o = btn.textContent; btn.textContent = "✓ Copiado";
+                     setTimeout(()=>btn.textContent=o, 1600); };
+  try { await navigator.clipboard.writeText(texto); ok(); }
+  catch(err){
+    const ta = el("textarea"); ta.value = texto;
+    ta.style.cssText = "position:fixed;top:-9999px"; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove(); ok();
+  }
+}
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  ["ger","ven","cli","fac"].forEach(v => $("#view-"+v).classList.toggle("hidden", v !== t.dataset.v));
+});
+
+/* ============================================================================
+   11. CARGA DEL ARCHIVO
+   ========================================================================== */
+function recalcular(){
+  const raw = A.__raw;
+  A = analizar(raw, MAPA);
+  A.__raw = raw;
+  renderTodo();
+}
+
+function renderTodo(){
+  renderGerencia(); renderVendedores(); renderClientes(); renderFacturas();
+  $("#subtitle").textContent = "Corte al " + fdateLong(A.corte) + " · " + A.clientes.length + " clientes";
+  $("#footinfo").textContent = "Analizador de Cartera · corte " + fdate(A.corte) +
+    " · cartera " + money(A.total) + " · vencido " + money(A.vencido) + " (" + pct(A.vencido, A.total) + ")";
+  $("#actions").innerHTML =
+    '<button id="btnprint">Imprimir / PDF</button>'+
+    '<button id="btnnew">Cargar otro corte</button>'+
+    '<button id="btntheme" title="Cambiar tema">◐</button>';
+  $("#btnprint").onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x.dataset.v === "ger"));
+    ["ger","ven","cli","fac"].forEach(v => $("#view-"+v).classList.toggle("hidden", v !== "ger"));
+    setTimeout(() => print(), 60);
+  };
+  $("#btnnew").onclick = () => { $("#app").classList.add("hidden"); $("#demobanner").classList.add("hidden");
+    $("#dropzone").classList.remove("hidden"); $("#errbox").innerHTML=""; };
+  $("#btntheme").onclick = () => {
+    const cur = document.documentElement.getAttribute("data-theme");
+    const dark = cur ? cur === "dark" : matchMedia("(prefers-color-scheme:dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  };
+}
+
+async function cargar(file){
+  $("#errbox").innerHTML = "";
+  const dz = $("#dropzone");
+  dz.innerHTML = '<h2>Procesando '+esc(file.name)+'…</h2><p>Leyendo el archivo dentro de tu navegador.</p>';
+  try {
+    const rows = await readSheet(await file.arrayBuffer());
+    const raw  = parseOceanic(rows);
+    A = analizar(raw, MAPA);
+    A.__raw = raw;
+    guardarSnap(A);                 // registra el corte y localiza el anterior
+    $("#demobanner").classList.add("hidden");
+    dz.classList.add("hidden");
+    $("#app").classList.remove("hidden");
+    renderTodo();
+  } catch(err){
+    console.error(err);
+    dz.classList.remove("hidden");
+    dz.innerHTML = '<h2>Arrastra aquí el Excel de Oceanic</h2>'+
+      '<p>El informe <strong>CARTERA POR EDADES</strong>, tal como sale del sistema.</p>'+
+      '<button class="primary" id="pick">Seleccionar archivo</button>'+
+      '<div class="hint">Todo el procesamiento ocurre dentro de tu navegador.</div>';
+    $("#pick").onclick = () => $("#file").click();
+    showErr(err.message || String(err));
+  }
+}
+
+/* ---- datos de ejemplo: cifras inventadas, para mostrar la herramienta ---- */
+function demoData(){
+  const nombres = ["AGROPECUARIA EL ROBLE SAS","DISTRIBUIDORA DEL NORTE LTDA","GRANJA SANTA ELENA SAS",
+    "COMERCIALIZADORA ANDINA SA","INVERSIONES LA PRADERA SAS","PORCICOLA EL MIRADOR","AGROINSUMOS DEL CAUCA",
+    "HACIENDA LOS ALAMOS SAS","NUTRICION ANIMAL SA","COOPERATIVA AGRARIA UNIDA","CAMPO VERDE SAS",
+    "ALIMENTOS DEL PACIFICO","GANADERIA SAN JOSE","AGRO SUMINISTROS DEL EJE","VETERINARIA CENTRAL SAS",
+    "FINCA LA ESPERANZA","PRODUCTOS RURALES SA","AGROPECUARIA MONTECARLO","CRIADEROS UNIDOS SAS",
+    "DISTRIAGRO COLOMBIA"];
+  let semilla = 20260918;
+  const rnd = () => (semilla = (semilla * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const corte = new Date(Date.UTC(2026,8,18));
+  const facturas = [], clientes = new Map();
+  nombres.forEach((nombre,i) => {
+    const nit = String(800000000 + Math.floor(rnd()*99999999));
+    clientes.set(nit, { nit, nombre, contacto:"Tel. 31"+Math.floor(rnd()*100000000), tipo:"", sucursal:"" });
+    const n = 1 + Math.floor(rnd()*7);
+    for (let k=0;k<n;k++){
+      const dias = Math.max(0, Math.round((rnd()**2.2)*320) - 25);
+      const saldo = Math.round((0.4 + rnd()*9) * 1e6 / 1000) * 1000;
+      const fVence = new Date(corte.getTime() - dias*864e5);
+      facturas.push({ nit, cliente:nombre, sucursal:"", doc:String(10000+facturas.length), tipo:"F", zona:"76001",
+        fFactura:new Date(fVence.getTime() - 30*864e5), fVence, valor:saldo, abonos:0,
+        dias, saldo, tramo:tramoDe(dias) });
+    }
+  });
+  return { facturas, clientes, corte, totalArchivo:null, sucursal:"DEMOSTRACION" };
+}
+
+$("#demo").onclick = () => {
+  const raw = demoData();
+  A = analizar(raw, {}); A.__raw = raw; A.__demo = true;
+  PREV = null;                                  // la demo nunca toca el historial real
+  $("#dropzone").classList.add("hidden");
+  $("#demobanner").classList.remove("hidden");
+  $("#app").classList.remove("hidden");
+  renderTodo();
+};
+
+$("#pick").onclick = () => $("#file").click();
+$("#file").onchange = e => { if (e.target.files[0]) cargar(e.target.files[0]); };
+["dragenter","dragover"].forEach(ev => document.addEventListener(ev, e => {
+  e.preventDefault(); $("#dropzone").classList.add("over"); }));
+["dragleave","drop"].forEach(ev => document.addEventListener(ev, e => {
+  e.preventDefault(); if (ev === "dragleave" && e.relatedTarget) return;
+  $("#dropzone").classList.remove("over"); }));
+document.addEventListener("drop", e => {
+  const f = e.dataTransfer && e.dataTransfer.files[0];
+  if (f) cargar(f);
+});
+</script>

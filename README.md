@@ -13,6 +13,7 @@ de **Cartera**, **Tesorería** y **Compras**.
 | Exportaciones disponibles | Excel, PDF, TXT |
 | API / base de datos | **No disponible.** Toda entrada de datos es por export manual |
 | Correo corporativo | Google Workspace (Gmail) |
+| Entrega de cartera | Semanal, cada inicio de semana. Dos destinatarios: vendedores y gerencia |
 | Áreas a cargo | Cartera, Tesorería y Compras (las tres en la misma persona) |
 
 **Consecuencia de diseño:** las herramientas NO se conectan a Oceanic. Reciben el
@@ -50,12 +51,15 @@ Se usa solo si en algún momento hay un PC donde sí se pueda.
 ## Roadmap
 
 ### Fase 1 — Base
-- [ ] **Normalizador de exports de Oceanic** — limpia encabezados repetidos, totales
-      intercalados, números como texto y fechas. Base de todas las demás herramientas.
+- [x] **Lector del formato Oceanic** — interpreta el informe jerárquico (sucursal →
+      cliente → facturas → subtotal) sin librerías externas. Validado contra el total
+      del propio archivo.
 
 ### Fase 2 — Alto impacto
-- [ ] **Analizador de Cartera** — edades (0-30/31-60/61-90/+90), % vencido, top deudores,
-      DSO, y ranking de prioridad de cobro (monto × mora × historial de pago).
+- [x] **Analizador de Cartera** → `herramientas/analizador-cartera.html`
+      ([guía de uso](docs/USO-ANALIZADOR-CARTERA.md)) — tramos por vencer / 1-15 /
+      16-30 / 31-60 / 61-90 / +90, panel de decisiones, concentración de riesgo,
+      hojas de cobro por vendedor, comparativo semanal e impresión a PDF.
 - [ ] **Flujo de Caja a 13 semanas** — cruza cartera por cobrar + cuentas por pagar +
       costos fijos. Marca la semana de déficit. Incluye simulador de escenarios.
 - [ ] **Generador de cartas de cobro** — textos personalizados en tres tonos
