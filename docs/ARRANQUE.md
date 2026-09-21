@@ -52,11 +52,35 @@ Ninguna bloquea el uso de la herramienta; son afinamientos.
 
 ---
 
-## Siguiente herramienta del roadmap
+## Siguiente herramienta: Flujo de Caja a 13 semanas
 
-**Flujo de Caja a 13 semanas.** Necesita dos exports de Oceanic: cartera por
-cobrar (ya se sabe leer) y cuentas por pagar (falta ver su estructura), más los
-costos fijos mensuales (nómina, impuestos, arriendos).
+Acordado con el usuario para la próxima sesión.
+
+### Qué traer
+
+1. **Export de cuentas por pagar de Oceanic**, en Excel, **crudo, sin limpiar**.
+   Basta con 15-20 filas. Anonimizar los proveedores si se quiere (Proveedor A,
+   B, C): lo que se necesita es la estructura, no los datos.
+2. **Saldo actual en bancos.** Un número por cuenta.
+3. **Costos fijos mensuales** y el día aproximado en que salen: nómina,
+   parafiscales, impuestos, arriendos, servicios, cuotas de créditos.
+
+### Preguntas para esa sesión
+
+- ¿Oceanic tiene un informe de cuentas por pagar por vencimientos, parecido al
+  de cartera por edades? Si sí, ese sirve mejor.
+- ¿Cómo se decide hoy a quién se le paga primero cuando no alcanza la caja?
+- ¿Hay proveedores que den descuento por pronto pago? ¿Cuánto y a cuántos días?
+- ¿Hay créditos o leasings con cuota fija? ¿Cuántos y de qué valor?
+- ¿Se manejan varias cuentas bancarias o una sola bolsa?
+- ¿Qué porcentaje de la cartera se recauda realmente en la fecha de
+  vencimiento? (Determina qué tan optimista es la proyección de ingresos.)
+
+### Ventaja de partida
+
+La cartera por cobrar ya se sabe leer, así que la mitad de los ingresos de la
+proyección sale del analizador que ya existe. Conviene que las dos herramientas
+compartan el mismo lector del formato Oceanic.
 
 ---
 
