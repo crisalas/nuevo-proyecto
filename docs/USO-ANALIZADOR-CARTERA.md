@@ -34,15 +34,32 @@ Eso vive solo en ese equipo.
 
 | Destino | Qué usar |
 |---|---|
-| Gerencia, formal | **Imprimir / PDF** → guardar como PDF → adjuntar al correo |
-| Gerencia, rápido | **Resumen para WhatsApp** → copiar → pegar en el chat |
-| Correo escrito | **Texto para correo** → copiar → pegar en el cuerpo |
-| Cada vendedor | **Mensaje para WhatsApp** en su tarjeta → copiar → enviar |
+| **WhatsApp** (lo más cómodo) | **Enviar como imagen** → descargar o copiar → adjuntar como foto |
+| Correo formal | **Guardar como PDF** → adjuntar |
+| Correo o chat escrito | **Como texto** → copiar → pegar |
+| Cada vendedor | **Enviar como imagen** en su tarjeta |
 
-Todos los textos se pueden **editar antes de copiar**: aparecen en un recuadro
-donde se puede ajustar lo que sea antes de enviarlos.
+### La imagen
 
-En WhatsApp los asteriscos del texto se convierten solos en negrita.
+Genera un PNG del informe, dibujado igual que en pantalla: indicadores, gráfico
+de edades, panel de decisiones y mayores deudores. Se envía como una foto
+cualquiera, así que se ve bien en cualquier teléfono sin abrir nada.
+
+- **Copiar imagen** → pegar directo en WhatsApp Web o en el correo
+- **Descargar imagen** → queda en Descargas, se adjunta como foto
+- **En el celular** → mantener presionada la vista previa para guardarla
+
+Cada vendedor tiene su propia imagen, con su orden de llamada y los teléfonos.
+Es lo que mejor funciona: la abre en el celular y llama desde ahí.
+
+> La descarga directa puede no funcionar si abres la herramienta desde el enlace
+> compartido. Usa *Copiar imagen*, o mantén presionada la vista previa. Con el
+> archivo guardado en tu PC funcionan las dos.
+
+### El texto
+
+Los textos son editables antes de copiar. En WhatsApp los asteriscos se
+convierten solos en negrita.
 
 ### Sobre el PDF
 

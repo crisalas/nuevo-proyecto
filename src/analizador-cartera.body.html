@@ -557,7 +557,29 @@ function panelCompartir(id, texto, nota){
     '<div class="row"><button class="primary" data-copybox="'+id+'">Copiar texto</button>'+
     '<small>'+esc(nota)+'</small></div></div>';
 }
-function engancharCompartir(scope){
+/* arma el panel de imagen la primera vez que se abre */
+function montarPanelImagen(box, gen, nombre){
+  box.innerHTML = '<div style="padding:12px 0;color:var(--ink-3);font-size:13px">Generando la imagen…</div>';
+  setTimeout(() => {
+    let cv;
+    try { cv = gen(); }
+    catch(err){ console.error(err);
+      box.innerHTML = '<div class="err">No se pudo generar la imagen: '+esc(err.message||err)+'</div>'; return; }
+    box.innerHTML = "";
+    const fila = el("div","row");
+    const bCop = el("button","primary","Copiar imagen");
+    const bDes = el("button",null,"Descargar imagen");
+    const nota = el("small",null,"En el celular: mantén presionada la imagen para guardarla y enviarla.");
+    bCop.onclick = () => copiarImagen(cv, bCop);
+    bDes.onclick = () => guardarImagen(cv, nombre, bDes);
+    fila.append(bCop, bDes, nota);
+    const prev = el("div"); prev.style.marginTop = "10px";
+    box.append(fila, prev);
+    previsualizar(cv, prev);
+  }, 30);
+}
+
+function engancharCompartir(scope, generadores){
   document.querySelectorAll(scope+" [data-openbox]").forEach(b => b.onclick = () => {
     const box = document.getElementById(b.dataset.openbox);
     const abierto = box.classList.contains("on");
@@ -566,6 +588,19 @@ function engancharCompartir(scope){
   });
   document.querySelectorAll(scope+" [data-copybox]").forEach(b => b.onclick = () =>
     copiar(document.getElementById(b.dataset.copybox+"-t").value, b));
+  document.querySelectorAll(scope+" [data-img]").forEach(b => b.onclick = () => {
+    const box = document.getElementById(b.dataset.img);
+    const abierto = box.classList.contains("on");
+    box.parentNode.querySelectorAll(".sharebox").forEach(x => x.classList.remove("on"));
+    if (abierto) return;
+    box.classList.add("on");
+    if (!box.dataset.listo){
+      box.dataset.listo = "1";
+      const g = (generadores || {})[b.dataset.img];
+      if (g) montarPanelImagen(box, g.gen, g.nombre);
+    }
+    box.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  });
 }
 
 /* ---- prioridad de cobro: monto x severidad de la mora --------------------- */
@@ -639,7 +674,7 @@ function alertas(a){
   if (totVenc.length){
     out.push({n:"crit", i:"!", t:totVenc.length+" cliente(s) con el 100% de su cartera vencida",
       d:totVenc.slice(0,4).map(c=>esc(c.nombre)+" ("+money(c.vencido)+", "+c.maxDias+" días)").join(" · ")+
-        (totVenc.length>4?" y "+(totVenc.length-4)+" mas":"")+". Candidatos a bloqueo de despacho."});
+        (totVenc.length>4?" y "+(totVenc.length-4)+" más":"")+". Candidatos a bloqueo de despacho."});
   }
   // facturas muy antiguas
   const viejas = a.facturas.filter(f => f.dias > 365).sort((x,y)=>y.dias-x.dias);
@@ -662,7 +697,7 @@ function alertas(a){
       return p ? { c, d:c.vencido - p.v } : null;
     }).filter(x => x && x.d > umbral).sort((x,y)=>y.d-x.d);
     if (emp.length) out.push({n:"warn", i:"▲", t:emp.length+" cliente(s) empeoraron esta semana",
-      d:emp.slice(0,4).map(x=>esc(x.c.nombre)+" +"+moneyM(x.d)).join(" · ")+(emp.length>4?" y "+(emp.length-4)+" mas":"")});
+      d:emp.slice(0,4).map(x=>esc(x.c.nombre)+" +"+moneyM(x.d)).join(" · ")+(emp.length>4?" y "+(emp.length-4)+" más":"")});
   }
   if (!out.length) out.push({n:"info", i:"✓", t:"Sin alertas críticas en este corte", d:"La cartera está dentro de los parámetros definidos."});
   return out;
@@ -804,18 +839,22 @@ function renderGerencia(){
   /* compartir */
   h += '<div class="card noprint" id="compartir"><header><h2>Compartir este informe</h2>'+
        '<span class="note">texto listo para pegar</span></header>'+
-       '<p style="color:var(--ink-2);margin:0 0 12px;font-size:13px">Para gerencia, un PDF por correo. '+
-       'Para algo rápido por WhatsApp, el resumen en texto se lee mejor en el celular que un adjunto.</p>'+
+       '<p style="color:var(--ink-2);margin:0 0 12px;font-size:13px">La <strong>imagen</strong> se ve igual que esta pantalla '+
+       'y se envía como una foto: es lo más cómodo para WhatsApp. El <strong>PDF</strong> sirve para el correo formal.</p>'+
        '<div class="share">'+
-       '<button data-openbox="box-wa">Resumen para WhatsApp</button>'+
-       '<button data-openbox="box-mail">Texto para correo</button>'+
-       '<button id="btnpdf2">Guardar como PDF</button></div>'+
+       '<button class="primary" data-img="img-ger">Enviar como imagen</button>'+
+       '<button id="btnpdf2">Guardar como PDF</button>'+
+       '<button data-openbox="box-wa">Como texto (WhatsApp)</button>'+
+       '<button data-openbox="box-mail">Como texto (correo)</button></div>'+
+       '<div class="sharebox" id="img-ger"></div>'+
        panelCompartir("box-wa", textoGerencia(a,true), "Pégalo en WhatsApp: los asteriscos se convierten en negrita.")+
        panelCompartir("box-mail", textoGerencia(a,false), "Pégalo en el cuerpo del correo.")+
        '</div>';
 
   $("#view-ger").innerHTML = h;
-  engancharCompartir("#view-ger");
+  engancharCompartir("#view-ger", {
+    "img-ger": { gen: () => imagenGerencia(A),
+                 nombre: "cartera-" + fdate(a.corte).replace(/\//g,"-") + ".png" } });
   $("#btnpdf2").onclick = () => $("#btnprint").click();
 }
 
@@ -876,8 +915,10 @@ function renderVendedores(){
       '<div class="note">'+v.clientes.length+' clientes · '+moneyM(v.total)+' en cartera · '+
       '<strong>'+moneyM(v.vencido)+' vencido ('+pct(v.vencido,v.total)+')</strong></div></div>'+
       '<div class="share" style="margin:0">'+
-      '<button class="noprint" data-openbox="box-v'+i+'">Mensaje para WhatsApp</button>'+
+      '<button class="primary noprint" data-img="img-v'+i+'">Enviar como imagen</button>'+
+      '<button class="noprint" data-openbox="box-v'+i+'">Como texto</button>'+
       '<button class="noprint" data-copyv="'+esc(v.nombre)+'">Copiar para Excel</button></div></div>'+
+      '<div class="sharebox" id="img-v'+i+'"></div>'+
       panelCompartir("box-v"+i, textoVendedor(v, a, true), "Envíalo por WhatsApp a "+v.nombre+".");
     if (!lista.length){ h += '<div class="empty">Sin cartera vencida. Nada que cobrar esta semana.</div></div>'; return; }
     h += '<div class="note" style="margin-bottom:8px">Orden de llamada sugerido: monto vencido, pesado por los días de mora.</div>';
@@ -895,7 +936,11 @@ function renderVendedores(){
       })) + '</div>';
   });
   $("#view-ven").innerHTML = h;
-  engancharCompartir("#view-ven");
+  const gens = {};
+  a.vendedores.forEach((v,i) => gens["img-v"+i] = {
+    gen: () => imagenVendedor(v, A),
+    nombre: "cobro-" + v.nombre.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + ".png" });
+  engancharCompartir("#view-ven", gens);
   const me = $("#mapedit"); if (me) me.onclick = () => { guardarMapa({}); recalcular(); };
   document.querySelectorAll("[data-copyv]").forEach(b => b.onclick = () => {
     const v = a.vendedores.find(x=>x.nombre===b.dataset.copyv);
@@ -1131,4 +1176,289 @@ document.addEventListener("drop", e => {
   const f = e.dataTransfer && e.dataTransfer.files[0];
   if (f) cargar(f);
 });
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   INFORME COMO IMAGEN
+   Dibuja el informe en un canvas para compartirlo por WhatsApp o correo.
+   Se dibuja a mano (no es una captura de pantalla) para que salga siempre
+   igual, con buena resolucion y sin depender de librerias externas.
+   Usa siempre la paleta clara: una imagen oscura se lee mal reenviada.
+   ========================================================================== */
+const PAL = {
+  fondo:"#ffffff", tarjeta:"#fbfbfa", borde:"#e3e2dd", suave:"#f1f1ee",
+  ink:"#0b0b0b", ink2:"#52514e", ink3:"#84837d",
+  crit:"#d03b3b", warn:"#e09400", ok:"#0ca30c", azul:"#2a78d6",
+  edad:["#b8b7b0","#86b6ef","#5598e7","#2a78d6","#1c5cab","#104281"]
+};
+const FUENTE = 'ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+
+class Lienzo {
+  constructor(ancho, escala){
+    this.W = ancho; this.S = escala; this.M = 44; this.y = 0;
+    this.cv = document.createElement("canvas");
+    this.cv.width = ancho * escala; this.cv.height = 6000 * escala;
+    this.c = this.cv.getContext("2d");
+    this.c.scale(escala, escala);
+    this.c.fillStyle = PAL.fondo; this.c.fillRect(0,0,ancho,6000);
+    this.c.textBaseline = "alphabetic";
+  }
+  fuente(px, peso){ this.c.font = (peso||400)+" "+px+"px "+FUENTE; }
+  texto(t, x, y, {px=15, peso=400, color=PAL.ink, align="left"}={}){
+    this.fuente(px, peso); this.c.fillStyle = color; this.c.textAlign = align;
+    this.c.fillText(t, x, y); this.c.textAlign = "left";
+  }
+  /* devuelve el alto ocupado */
+  parrafo(t, x, y, maxW, {px=14, peso=400, color=PAL.ink2, alto=19}={}){
+    this.fuente(px, peso); this.c.fillStyle = color;
+    const palabras = String(t).split(/\s+/); let linea = "", n = 0;
+    for (const p of palabras){
+      const prueba = linea ? linea+" "+p : p;
+      if (this.c.measureText(prueba).width > maxW && linea){
+        this.c.fillText(linea, x, y + n*alto); linea = p; n++;
+      } else linea = prueba;
+    }
+    if (linea){ this.c.fillText(linea, x, y + n*alto); n++; }
+    return n * alto;
+  }
+  caja(x, y, w, h, r, relleno, borde){
+    const c = this.c; c.beginPath();
+    c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath();
+    if (relleno){ c.fillStyle = relleno; c.fill(); }
+    if (borde){ c.strokeStyle = borde; c.lineWidth = 1; c.stroke(); }
+  }
+  linea(x1,y,x2,color){ const c=this.c; c.beginPath(); c.moveTo(x1,y); c.lineTo(x2,y);
+    c.strokeStyle=color||PAL.borde; c.lineWidth=1; c.stroke(); }
+  /* recorta el sobrante y entrega el canvas definitivo */
+  cerrar(){
+    const alto = Math.ceil(this.y + this.M);
+    const fin = document.createElement("canvas");
+    fin.width = this.W * this.S; fin.height = alto * this.S;
+    const c = fin.getContext("2d");
+    c.fillStyle = PAL.fondo; c.fillRect(0,0,fin.width,fin.height);
+    c.drawImage(this.cv, 0, 0, this.W*this.S, alto*this.S, 0, 0, this.W*this.S, alto*this.S);
+    return fin;
+  }
+}
+
+/* ---- encabezado comun ---------------------------------------------------- */
+function encabezado(L, titulo, sub){
+  L.y = L.M + 10;
+  L.texto(titulo, L.M, L.y + 18, {px:30, peso:700});
+  L.y += 30;
+  L.texto(sub, L.M, L.y + 14, {px:14.5, color:PAL.ink3});
+  L.y += 30;
+  L.linea(L.M, L.y, L.W - L.M);
+  L.y += 26;
+}
+
+/* ---- fila de indicadores ------------------------------------------------- */
+function tarjetasKPI(L, items, porFila){
+  const ancho = L.W - L.M*2, hueco = 12;
+  for (let i = 0; i < items.length; i += porFila){
+    const fila = items.slice(i, i + porFila);
+    const w = (ancho - hueco*(fila.length-1)) / fila.length;
+    const h = 86;
+    fila.forEach((k, j) => {
+      const x = L.M + j*(w + hueco);
+      L.caja(x, L.y, w, h, 10, PAL.tarjeta, PAL.borde);
+      L.texto(k.lbl.toUpperCase(), x+16, L.y+24, {px:10.5, peso:700, color:PAL.ink3});
+      L.texto(k.val, x+16, L.y+56, {px:27, peso:700, color:k.color||PAL.ink});
+      if (k.pie) L.texto(k.pie, x+16, L.y+75, {px:12.5, color:PAL.ink2});
+    });
+    L.y += h + hueco;
+  }
+  L.y += 14;
+}
+
+/* ---- grafico de edades --------------------------------------------------- */
+function graficoEdades(L, tramos, total){
+  L.texto("Distribución por edades", L.M, L.y + 16, {px:17, peso:650});
+  L.y += 34;
+  const xEt = L.M, xBar = L.M + 118, xFin = L.W - L.M - 190, anchoBar = xFin - xBar;
+  const max = Math.max(...tramos.map(t=>t.valor), 1);
+  tramos.forEach((t,i) => {
+    const y = L.y, w = Math.max(t.valor/max*anchoBar, t.valor>0 ? 4 : 0);
+    L.texto(t.lbl, xEt, y+18, {px:13.5, peso:550, color:PAL.ink2});
+    L.caja(xBar, y+4, anchoBar, 22, 5, PAL.suave);
+    if (w > 0) L.caja(xBar, y+4, w, 22, 5, PAL.edad[i]);
+    L.texto(moneyM(t.valor), L.W - L.M, y+16, {px:13.5, peso:650, align:"right"});
+    L.texto(pct(t.valor,total)+" · "+t.facturas+" fact.", L.W - L.M, y+30,
+            {px:11.5, color:PAL.ink3, align:"right"});
+    L.y += 36;
+  });
+  L.y += 16;
+}
+
+/* ---- panel de decisiones ------------------------------------------------- */
+function panelAlertas(L, lista){
+  const limpio = t => String(t).replace(/<[^>]*>/g,"").replace(/&amp;/g,"&").replace(/&quot;/g,'"');
+  L.texto("Requiere decisión", L.M, L.y + 16, {px:17, peso:650});
+  L.y += 32;
+  const w = L.W - L.M*2;
+  for (const al of lista){
+    const col = al.n === "crit" ? PAL.crit : al.n === "warn" ? PAL.warn : PAL.azul;
+    const yIni = L.y;
+    const hT = L.parrafo(limpio(al.t), L.M+30, L.y+20, w-46, {px:14.5, peso:650, color:PAL.ink, alto:20});
+    const hD = L.parrafo(limpio(al.d), L.M+30, L.y+20+hT+2, w-46, {px:13, color:PAL.ink2, alto:18});
+    const h = hT + hD + 26;
+    L.caja(L.M, yIni, 4, h-8, 2, col);              // franja de severidad
+    L.y = yIni + h;
+  }
+  L.y += 14;
+}
+
+/* ---- tabla simple -------------------------------------------------------- */
+function tabla(L, titulo, cabeceras, filas, anchos){
+  L.texto(titulo, L.M, L.y + 16, {px:17, peso:650});
+  L.y += 32;
+  const w = L.W - L.M*2;
+  let x = L.M;
+  cabeceras.forEach((c,i) => {
+    const der = i > 0;
+    L.texto(c.toUpperCase(), der ? x + anchos[i]*w : x, L.y+12,
+            {px:10.5, peso:700, color:PAL.ink3, align: der ? "right":"left"});
+    x += anchos[i]*w;
+  });
+  L.y += 20; L.linea(L.M, L.y, L.W - L.M); L.y += 6;
+  filas.forEach((f, n) => {
+    if (n % 2) L.caja(L.M-8, L.y-2, w+16, 30, 5, PAL.suave);
+    let x = L.M;
+    f.forEach((celda, i) => {
+      const der = i > 0;
+      const txt = Array.isArray(celda) ? celda[0] : celda;
+      const col = Array.isArray(celda) ? celda[1] : (i===0 ? PAL.ink : PAL.ink2);
+      L.texto(txt, der ? x + anchos[i]*w : x, L.y+19,
+              {px:13, peso: i===0?550:600, color:col, align: der?"right":"left"});
+      x += anchos[i]*w;
+    });
+    L.y += 30;
+  });
+  L.y += 12;
+}
+
+function pie(L, texto){
+  L.y += 6; L.linea(L.M, L.y, L.W - L.M); L.y += 8;
+  L.texto(texto, L.M, L.y + 14, {px:11.5, color:PAL.ink3});
+  L.y += 18;
+}
+
+/* ============================================================================
+   Informe de gerencia como imagen
+   ========================================================================== */
+function imagenGerencia(a, escala){
+  const L = new Lienzo(1000, escala || 2);
+  encabezado(L, "Cartera al " + fdate(a.corte),
+    a.clientes.length + " clientes · " + a.facturas.length + " facturas pendientes" +
+    (PREV ? " · comparado con el corte del " + PREV.corte : ""));
+
+  const dl = (act, ant) => { if (ant == null) return ""; const d = act - ant;
+    return Math.abs(d) < 1 ? "sin cambio" : (d>0?"▲ ":"▼ ") + moneyM(Math.abs(d)); };
+
+  tarjetasKPI(L, [
+    { lbl:"Cartera total", val:moneyM(a.total), pie: PREV ? dl(a.total,PREV.total) : money(a.total) },
+    { lbl:"Vencida", val:moneyM(a.vencido), color: a.vencido/a.total>=.35 ? PAL.crit : PAL.ink,
+      pie: pct(a.vencido,a.total)+" del total"+(PREV?"   "+dl(a.vencido,PREV.vencido):"") },
+    { lbl:"Más de 90 días", val:moneyM(a.mas90), color: a.mas90/a.total>=.08 ? PAL.crit : PAL.ink,
+      pie: pct(a.mas90,a.total)+" del total"+(PREV?"   "+dl(a.mas90,PREV.mas90):"") }
+  ], 3);
+  tarjetasKPI(L, [
+    { lbl:"Mora promedio", val:Math.round(a.moraProm)+" días", pie:"ponderada por monto" },
+    { lbl:"Clientes en mora", val:a.enMora+" de "+a.clientes.length, pie:pct(a.enMora,a.clientes.length)+" de la base" }
+  ], 2);
+
+  graficoEdades(L, a.porTramo, a.total);
+  panelAlertas(L, alertas(a).slice(0,5));
+
+  tabla(L, "Mayores deudores",
+    ["Cliente","Vencido","Más de 90","Días"],
+    a.rank.slice(0,10).map(c => [
+      c.nombre.length > 34 ? c.nombre.slice(0,33)+"…" : c.nombre,
+      [money(c.vencido), PAL.ink],
+      c.mas90 ? money(c.mas90) : "—",
+      String(c.maxDias)
+    ]), [0.46, 0.22, 0.2, 0.12]);
+
+  pie(L, "Fuente: informe CARTERA POR EDADES de Oceanic · corte al " + fdate(a.corte));
+  return L.cerrar();
+}
+
+/* ============================================================================
+   Hoja de cobro de un vendedor como imagen
+   ========================================================================== */
+function imagenVendedor(v, a, escala){
+  const L = new Lienzo(1000, escala || 2);
+  encabezado(L, "Cobro de cartera · " + v.nombre, "Corte al " + fdate(a.corte));
+  tarjetasKPI(L, [
+    { lbl:"Tu cartera", val:moneyM(v.total), pie:v.clientes.length+" clientes" },
+    { lbl:"Vencido", val:moneyM(v.vencido), color: v.pctVencido>=.35 ? PAL.crit : PAL.ink,
+      pie:pct(v.vencido,v.total)+" de tu cartera" },
+    { lbl:"Más de 90 días", val:moneyM(v.mas90), color: v.mas90 ? PAL.crit : PAL.ink, pie:"tramo crítico" }
+  ], 3);
+
+  const lista = [...v.clientes].filter(c=>c.vencido>1).sort((x,y)=>prioridad(y)-prioridad(x));
+  if (!lista.length){
+    L.texto("Sin cartera vencida. Nada pendiente esta semana.", L.M, L.y+18, {px:15, color:PAL.ink2});
+    L.y += 30;
+  } else {
+    tabla(L, "Orden de llamada",
+      ["#  Cliente","Teléfono","Vencido","Días"],
+      lista.slice(0,14).map((c,i) => {
+        const info = a.clientes_raw.get(c.nit);
+        const tel = info ? (String(info.contacto).match(/Tel\.?\s*([\d\-\s]{6,})/)||[,""])[1].trim() : "";
+        const nom = c.nombre.length > 30 ? c.nombre.slice(0,29)+"…" : c.nombre;
+        return [(i+1)+".  "+nom, tel || "—", [money(c.vencido), PAL.ink],
+                [String(c.maxDias), c.maxDias>90 ? PAL.crit : PAL.ink2]];
+      }), [0.44, 0.2, 0.24, 0.12]);
+    if (lista.length > 14){
+      const r = lista.slice(14).reduce((s,c)=>s+c.vencido,0);
+      L.texto("y "+(lista.length-14)+" clientes más por "+money(r), L.M, L.y+14, {px:13, color:PAL.ink3});
+      L.y += 22;
+    }
+  }
+  pie(L, "Orden sugerido: monto vencido pesado por los días de mora.");
+  return L.cerrar();
+}
+
+/* ============================================================================
+   Guardar y copiar la imagen
+   ========================================================================== */
+function canvasABlob(cv){ return new Promise(r => cv.toBlob(r, "image/png")); }
+
+async function guardarImagen(cv, nombre, btn){
+  const blob = await canvasABlob(cv);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  if (btn){ const o = btn.textContent; btn.textContent = "✓ Descargada";
+            setTimeout(()=>btn.textContent=o, 1800); }
+}
+
+async function copiarImagen(cv, btn){
+  const o = btn ? btn.textContent : "";
+  try {
+    const blob = await canvasABlob(cv);
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    if (btn){ btn.textContent = "✓ Copiada"; setTimeout(()=>btn.textContent=o, 1800); }
+  } catch(e){
+    if (btn){ btn.textContent = "No se pudo copiar"; setTimeout(()=>btn.textContent=o, 2200); }
+    alert("Este navegador no dejó copiar la imagen al portapapeles.\n\n" +
+          "Usa «Descargar imagen» y adjúntala como cualquier foto.");
+  }
+}
+
+/* vista previa dentro de la herramienta, para revisar antes de enviar */
+function previsualizar(cv, contenedor){
+  contenedor.innerHTML = "";
+  const img = new Image();
+  img.src = cv.toDataURL("image/png");
+  img.style.cssText = "width:100%;height:auto;border:1px solid var(--border);border-radius:9px;display:block";
+  img.alt = "Vista previa del informe";
+  contenedor.appendChild(img);
+}
 </script>
