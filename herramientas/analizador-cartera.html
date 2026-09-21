@@ -8,7 +8,7 @@
 <body>
 <title>Analizador de Cartera</title>
 <style>
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 :root{
   color-scheme:light;
   --bg:#f4f4f1; --surface:#fcfcfb; --surface-2:#f7f7f5;
@@ -157,6 +157,14 @@ details.adv summary{cursor:pointer;font-size:12.5px;color:var(--ink-2);font-weig
 .err{background:color-mix(in srgb,var(--crit) 10%,var(--surface));border:1px solid var(--crit);
   color:var(--ink);padding:12px 14px;border-radius:9px;margin-bottom:14px;font-size:13px}
 .hidden{display:none!important}
+.solopdf{display:none}
+.share{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sharebox{display:none;margin-top:10px}
+.sharebox.on{display:block}
+.sharebox textarea{min-height:230px;line-height:1.5;font-size:12.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.sharebox .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.sharebox .row small{color:var(--ink-3);font-size:11.5px}
 
 /* ---------- print ---------- */
 @media print{
@@ -166,6 +174,8 @@ details.adv summary{cursor:pointer;font-size:12.5px;color:var(--ink-2);font-weig
   .wrap{max-width:none;padding:0}
   .card,.kpi{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
   .printblock{display:block!important}
+  .solopdf{display:block}          /* grafico vectorial: se imprime siempre */
+  .solopantalla{display:none}
   .kpis{grid-template-columns:repeat(5,1fr);gap:7px}
   .kpi{padding:9px 10px}
   .kpi .val{font-size:18px}
@@ -477,6 +487,95 @@ function analizar(data, mapaVend){
            enMora: clientes.filter(c=>c.vencido>1).length };
 }
 
+/* ============================================================================
+   TEXTOS PARA COMPARTIR  (WhatsApp usa *asteriscos* para negrita; el correo no)
+   ========================================================================== */
+function textoGerencia(a, wa){
+  const N = wa ? "*" : "";                       // marca de negrita
+  const L = [];
+  L.push(N+"CARTERA AL "+fdate(a.corte)+N);
+  L.push("");
+  L.push("Cartera total: "+money(a.total));
+  L.push("Vencida: "+money(a.vencido)+"  ("+pct(a.vencido,a.total)+")");
+  L.push("Más de 90 días: "+money(a.mas90)+"  ("+pct(a.mas90,a.total)+")");
+  L.push("Mora promedio: "+Math.round(a.moraProm)+" días");
+  L.push("Clientes en mora: "+a.enMora+" de "+a.clientes.length);
+
+  if (PREV){
+    const d = a.vencido - PREV.vencido, d9 = a.mas90 - PREV.mas90;
+    L.push("");
+    L.push(N+"Variación vs. corte del "+PREV.corte+N);
+    L.push("Vencido: "+(d>=0?"sube ":"baja ")+money(Math.abs(d)));
+    L.push("Más de 90: "+(d9>=0?"sube ":"baja ")+money(Math.abs(d9)));
+  }
+
+  L.push("");
+  L.push(N+"Requiere decisión"+N);
+  alertas(a).slice(0, wa?4:8).forEach(al => {
+    const limpio = t => String(t).replace(/<[^>]*>/g,"").replace(/&amp;/g,"&").replace(/&quot;/g,'"');
+    L.push("- "+limpio(al.t));
+    if (!wa) L.push("  "+limpio(al.d));
+  });
+
+  L.push("");
+  L.push(N+"Mayores deudores"+N);
+  a.rank.slice(0, wa?5:10).forEach((c,i) => {
+    L.push((i+1)+". "+c.nombre);
+    L.push("   "+money(c.vencido)+" vencido · "+c.maxDias+" días"+(c.mas90?" · "+money(c.mas90)+" a +90":""));
+  });
+  const resto = a.vencido - a.rank.slice(0, wa?5:10).reduce((x,c)=>x+c.vencido,0);
+  if (resto > 0) L.push("(los demás clientes suman "+money(resto)+")");
+  return L.join("\n");
+}
+
+function textoVendedor(v, a, wa){
+  const N = wa ? "*" : "";
+  const lista = [...v.clientes].filter(c=>c.vencido>1).sort((x,y)=>prioridad(y)-prioridad(x));
+  const tope = wa ? 12 : lista.length;
+  const L = [];
+  L.push(N+"COBRO DE CARTERA - "+v.nombre.toUpperCase()+N);
+  L.push("Corte al "+fdate(a.corte));
+  L.push("");
+  L.push("Tu cartera: "+money(v.total));
+  L.push("Vencido: "+money(v.vencido)+"  ("+pct(v.vencido,v.total)+")");
+  if (v.mas90) L.push("Más de 90 días: "+money(v.mas90));
+  L.push("");
+  if (!lista.length){ L.push("Sin cartera vencida. Nada pendiente esta semana."); return L.join("\n"); }
+  L.push(N+"Orden de llamada"+N);
+  lista.slice(0,tope).forEach((c,i) => {
+    const info = a.clientes_raw.get(c.nit);
+    const tel = info ? (String(info.contacto).match(/Tel\.?\s*([\d\-\s]{6,})/)||[,""])[1].trim() : "";
+    L.push("");
+    L.push((i+1)+". "+c.nombre);
+    L.push("   "+money(c.vencido)+" · "+c.maxDias+" días · "+c.docVencidos+" factura(s)");
+    if (tel) L.push("   Tel " + tel);
+  });
+  if (lista.length > tope){
+    const r = lista.slice(tope).reduce((x,c)=>x+c.vencido,0);
+    L.push("");
+    L.push("(y "+(lista.length-tope)+" clientes más por "+money(r)+")");
+  }
+  return L.join("\n");
+}
+
+/* panel desplegable con el texto listo para copiar o editar */
+function panelCompartir(id, texto, nota){
+  return '<div class="sharebox" id="'+id+'">'+
+    '<textarea id="'+id+'-t" spellcheck="false">'+esc(texto)+'</textarea>'+
+    '<div class="row"><button class="primary" data-copybox="'+id+'">Copiar texto</button>'+
+    '<small>'+esc(nota)+'</small></div></div>';
+}
+function engancharCompartir(scope){
+  document.querySelectorAll(scope+" [data-openbox]").forEach(b => b.onclick = () => {
+    const box = document.getElementById(b.dataset.openbox);
+    const abierto = box.classList.contains("on");
+    box.parentNode.querySelectorAll(".sharebox").forEach(x => x.classList.remove("on"));
+    if (!abierto){ box.classList.add("on"); box.querySelector("textarea").select(); }
+  });
+  document.querySelectorAll(scope+" [data-copybox]").forEach(b => b.onclick = () =>
+    copiar(document.getElementById(b.dataset.copybox+"-t").value, b));
+}
+
 /* ---- prioridad de cobro: monto x severidad de la mora --------------------- */
 const prioridad = c => c.vencido * (1 + Math.min(c.maxDias, 365) / 90);
 </script>
@@ -586,9 +685,28 @@ function kpi(lbl, val, foot, bad){
 }
 
 /* barras horizontales de distribucion por edades (ordinal, con hover) */
+/* Version vectorial del mismo grafico. Chrome no imprime colores de fondo,
+   pero si imprime las figuras de un SVG, asi que el PDF usa esta. */
+function barrasEdadesSVG(tramos, total){
+  const max = Math.max(...tramos.map(t=>t.valor), 1);
+  const W = 700, FIL = 30, X0 = 92, X1 = 520, H = tramos.length * FIL + 8;
+  let g = '<svg class="solopdf" viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" '+
+          'role="img" aria-label="Distribución de la cartera por edades" '+
+          'style="max-width:100%;font-family:inherit">';
+  tramos.forEach((t,i) => {
+    const y = i * FIL + 4, w = Math.max(t.valor / max * (X1 - X0), t.valor > 0 ? 3 : 0);
+    g += '<text x="0" y="'+(y+15)+'" font-size="12.5" font-weight="560" style="fill:var(--ink-2)">'+esc(t.lbl)+'</text>';
+    g += '<rect x="'+X0+'" y="'+y+'" width="'+(X1-X0)+'" height="20" rx="4" style="fill:var(--surface-2)"/>';
+    if (w > 0) g += '<rect x="'+X0+'" y="'+y+'" width="'+w.toFixed(1)+'" height="20" rx="4" style="fill:'+t.color+'"/>';
+    g += '<text x="'+W+'" y="'+(y+10)+'" font-size="12.5" font-weight="600" text-anchor="end" style="fill:var(--ink)">'+esc(moneyM(t.valor))+'</text>';
+    g += '<text x="'+W+'" y="'+(y+22)+'" font-size="10.5" text-anchor="end" style="fill:var(--ink-3)">'+esc(pct(t.valor,total)+' · '+t.facturas+' fact.')+'</text>';
+  });
+  return g + '</svg>';
+}
+
 function barrasEdades(tramos, total){
   const max = Math.max(...tramos.map(t=>t.valor), 1);
-  let h = '<div class="ages">';
+  let h = '<div class="ages solopantalla">';
   for (const t of tramos){
     const w = Math.max(t.valor / max * 100, t.valor > 0 ? 1.5 : 0);
     h += '<div class="agerow">'+
@@ -601,7 +719,7 @@ function barrasEdades(tramos, total){
   h += '</div><div class="legend">';
   for (const t of tramos) h += '<span><i style="background:'+t.color+'"></i>'+esc(t.lbl)+'</span>';
   h += '<span style="margin-left:auto;color:var(--ink-3)">Días vencidos al corte</span></div>';
-  return h;
+  return barrasEdadesSVG(tramos, total) + h;
 }
 
 /* barra apilada compacta (usada por cliente y por vendedor) */
@@ -690,7 +808,23 @@ function renderGerencia(){
     {h:String(c.maxDias),s:c.maxDias}, {h:mini(c.tramos),s:0}
   ]);
   h += tablaOrdenable(cols, filas) + '</div>';
+
+  /* compartir */
+  h += '<div class="card noprint" id="compartir"><header><h2>Compartir este informe</h2>'+
+       '<span class="note">texto listo para pegar</span></header>'+
+       '<p style="color:var(--ink-2);margin:0 0 12px;font-size:13px">Para gerencia, un PDF por correo. '+
+       'Para algo rápido por WhatsApp, el resumen en texto se lee mejor en el celular que un adjunto.</p>'+
+       '<div class="share">'+
+       '<button data-openbox="box-wa">Resumen para WhatsApp</button>'+
+       '<button data-openbox="box-mail">Texto para correo</button>'+
+       '<button id="btnpdf2">Guardar como PDF</button></div>'+
+       panelCompartir("box-wa", textoGerencia(a,true), "Pégalo en WhatsApp: los asteriscos se convierten en negrita.")+
+       panelCompartir("box-mail", textoGerencia(a,false), "Pégalo en el cuerpo del correo.")+
+       '</div>';
+
   $("#view-ger").innerHTML = h;
+  engancharCompartir("#view-ger");
+  $("#btnpdf2").onclick = () => $("#btnprint").click();
 }
 
 /* ============================================================================
@@ -744,13 +878,16 @@ function renderVendedores(){
   ])) + '</div>';
 
   /* una hoja de cobro por vendedor */
-  for (const v of a.vendedores){
+  a.vendedores.forEach((v,i) => {
     const lista = [...v.clientes].filter(c=>c.vencido>1).sort((x,y)=>prioridad(y)-prioridad(x));
     h += '<div class="card"><div class="vhead"><div><h2>'+esc(v.nombre)+'</h2>'+
       '<div class="note">'+v.clientes.length+' clientes · '+moneyM(v.total)+' en cartera · '+
       '<strong>'+moneyM(v.vencido)+' vencido ('+pct(v.vencido,v.total)+')</strong></div></div>'+
-      '<button class="noprint" data-copyv="'+esc(v.nombre)+'">Copiar para Excel</button></div>';
-    if (!lista.length){ h += '<div class="empty">Sin cartera vencida. Nada que cobrar esta semana.</div></div>'; continue; }
+      '<div class="share" style="margin:0">'+
+      '<button class="noprint" data-openbox="box-v'+i+'">Mensaje para WhatsApp</button>'+
+      '<button class="noprint" data-copyv="'+esc(v.nombre)+'">Copiar para Excel</button></div></div>'+
+      panelCompartir("box-v"+i, textoVendedor(v, a, true), "Envíalo por WhatsApp a "+v.nombre+".");
+    if (!lista.length){ h += '<div class="empty">Sin cartera vencida. Nada que cobrar esta semana.</div></div>'; return; }
     h += '<div class="note" style="margin-bottom:8px">Orden de llamada sugerido: monto vencido, pesado por los días de mora.</div>';
     h += tablaOrdenable(
       [{lbl:"Prio",r:true,n:true},{lbl:"Cliente",cls:"name"},{lbl:"Teléfono"},{lbl:"Vencido",r:true,n:true},
@@ -764,8 +901,9 @@ function renderVendedores(){
           {h:c.mas90?money(c.mas90):"—",s:c.mas90},{h:String(c.maxDias),s:c.maxDias},
           {h:String(c.docVencidos),s:c.docVencidos},{h:mini(c.tramos),s:0}];
       })) + '</div>';
-  }
+  });
   $("#view-ven").innerHTML = h;
+  engancharCompartir("#view-ven");
   const me = $("#mapedit"); if (me) me.onclick = () => { guardarMapa({}); recalcular(); };
   document.querySelectorAll("[data-copyv]").forEach(b => b.onclick = () => {
     const v = a.vendedores.find(x=>x.nombre===b.dataset.copyv);

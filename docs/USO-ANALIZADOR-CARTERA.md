@@ -10,8 +10,9 @@ reporte de gerencia y las hojas de cobro por vendedor.
 1. En Oceanic, exporta **CARTERA POR EDADES** a Excel.
 2. Abre `herramientas/analizador-cartera.html` en Chrome (doble clic).
 3. Arrastra el archivo a la ventana.
-4. Revisa la pestaña **Gerencia** y usa **Imprimir / PDF** para el informe.
-5. En **Vendedores**, usa *Copiar para Excel* en cada vendedor y envíale su lista.
+4. Revisa la pestaña **Gerencia**.
+5. Comparte: **Imprimir / PDF** para gerencia, o *Resumen para WhatsApp* si es algo rápido.
+6. En **Vendedores**, *Mensaje para WhatsApp* o *Copiar para Excel* para cada uno.
 
 No hay que limpiar el archivo ni cambiarle el formato. Se carga tal como sale.
 
@@ -26,6 +27,31 @@ tiene dependencias: lee el `.xlsx` con el descompresor que ya trae el navegador.
 Lo único que se guarda es un resumen por corte (totales y saldo por cliente) en el
 almacenamiento local del navegador, para poder comparar contra la semana anterior.
 Eso vive solo en ese equipo.
+
+---
+
+## Cómo compartir el informe
+
+| Destino | Qué usar |
+|---|---|
+| Gerencia, formal | **Imprimir / PDF** → guardar como PDF → adjuntar al correo |
+| Gerencia, rápido | **Resumen para WhatsApp** → copiar → pegar en el chat |
+| Correo escrito | **Texto para correo** → copiar → pegar en el cuerpo |
+| Cada vendedor | **Mensaje para WhatsApp** en su tarjeta → copiar → enviar |
+
+Todos los textos se pueden **editar antes de copiar**: aparecen en un recuadro
+donde se puede ajustar lo que sea antes de enviarlos.
+
+En WhatsApp los asteriscos del texto se convierten solos en negrita.
+
+### Sobre el PDF
+
+Las barras del gráfico se dibujan como figura vectorial, no como color de fondo,
+porque Chrome por defecto **no imprime los fondos**. Así el gráfico sale siempre,
+tenga o no marcada la casilla *Gráficos de fondo* en el diálogo de impresión.
+
+Si algún color se ve pálido en el PDF, marca **Más ajustes → Gráficos de fondo**
+en el diálogo de impresión de Chrome.
 
 ---
 
