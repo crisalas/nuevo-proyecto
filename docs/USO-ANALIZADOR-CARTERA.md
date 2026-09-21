@@ -34,10 +34,31 @@ Eso vive solo en ese equipo.
 
 | Destino | Qué usar |
 |---|---|
-| **WhatsApp** (lo más cómodo) | **Enviar como imagen** → descargar o copiar → adjuntar como foto |
+| **Que vean la herramienta completa** | **Publicar este corte en el enlace** → compartir el enlace |
+| WhatsApp rápido | **Enviar como imagen** → adjuntar como foto |
 | Correo formal | **Guardar como PDF** → adjuntar |
 | Correo o chat escrito | **Como texto** → copiar → pegar |
-| Cada vendedor | **Enviar como imagen** en su tarjeta |
+
+### El enlace compartido (lo más completo)
+
+En la pestaña **Gerencia**, al final, el botón **Publicar este corte en el
+enlace** guarda los datos del corte dentro de la propia página publicada.
+
+A partir de ahí, quien abra el enlace ve **exactamente lo mismo que tú**: las
+cuatro pestañas, los indicadores, el detalle de clientes y facturas, y el botón
+de imprimir. No tiene que cargar ningún archivo ni instalar nada.
+
+Cada semana, al cargar el archivo nuevo, se vuelve a pulsar el botón y el enlace
+queda actualizado. Es el mismo enlace siempre.
+
+**Antes de compartirlo, ten en cuenta:**
+
+- El enlace es **privado**. Solo lo abre quien lo autorices desde el menú
+  *Compartir* de la página.
+- Quien lo abra ve **todos los clientes con nombre y saldo**. Para gerencia está
+  bien; para un vendedor, mejor enviarle su imagen o su lista, no el enlace.
+- El botón solo aparece cuando abres la herramienta **desde el enlace**. Desde el
+  archivo guardado en el disco no aparece, porque ahí no hay nada que publicar.
 
 ### La imagen
 
