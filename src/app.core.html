@@ -849,9 +849,10 @@ function renderGerencia(){
        '<p style="color:var(--ink-3);margin:10px 0 0;font-size:12px">El enlace es privado: solo lo abre quien tú '+
        'autorices desde el menú <em>Compartir</em> de la página. Ten en cuenta que quien lo abra ve los nombres '+
        'y saldos de todos los clientes.</p></div>'+
-       '<p style="color:var(--ink-2);margin:14px 0 12px;font-size:13px">Otras formas: la <strong>imagen</strong> se envía como una foto '+
-       '(cómodo para WhatsApp) y el <strong>PDF</strong> sirve para el correo formal.</p>'+
+       '<p style="color:var(--ink-2);margin:14px 0 12px;font-size:13px">Si quien lo recibe <strong>no puede abrir el enlace</strong>, '+
+       'envíale el informe como archivo: se abre en cualquier navegador, sin cuenta ni internet, y trae todo lo que ves aquí.</p>'+
        '<div class="share">'+
+       '<button class="primary" id="btnarchivo">Descargar informe para enviar</button>'+
        '<button data-img="img-ger">Enviar como imagen</button>'+
        '<button id="btnpdf2">Guardar como PDF</button>'+
        '<button data-openbox="box-wa">Como texto (WhatsApp)</button>'+
@@ -866,6 +867,21 @@ function renderGerencia(){
     "img-ger": { gen: () => imagenGerencia(A),
                  nombre: "cartera-" + fdate(a.corte).replace(/\//g,"-") + ".png" } });
   $("#btnpdf2").onclick = () => $("#btnprint").click();
+  $("#btnarchivo").onclick = e => {
+    const b = e.currentTarget, o = b.textContent;
+    b.disabled = true; b.textContent = "Preparando…";
+    setTimeout(async () => {
+      try {
+        const doc = construirDocumento(A.__raw);
+        await guardarBlob(new Blob([doc], {type:"text/html"}),
+          "informe-cartera-" + fdate(A.corte).replace(/\//g,"-") + ".html", b);
+      } catch(err){
+        console.error(err); alert("No se pudo generar el archivo: " + (err.message || err));
+        b.textContent = o;
+      }
+      b.disabled = false;
+    }, 30);
+  };
 
   /* el bloque de publicar solo aparece donde la pagina puede publicarse */
   apiArtifact().then(api => {
@@ -1449,9 +1465,12 @@ function imagenVendedor(v, a, escala){
 function canvasABlob(cv){ return new Promise(r => cv.toBlob(r, "image/png")); }
 
 async function guardarImagen(cv, nombre, btn){
-  const blob = await canvasABlob(cv);
+  return guardarBlob(await canvasABlob(cv), nombre, btn);
+}
+
+async function guardarBlob(blob, nombre, btn){
   const listo = () => { if (!btn) return; const o = btn.textContent;
-    btn.textContent = "✓ Descargada"; setTimeout(()=>btn.textContent=o, 1800); };
+    btn.textContent = "✓ Descargado"; setTimeout(()=>btn.textContent=o, 2000); };
 
   /* Abierta desde el enlace compartido, la pagina no puede descargar por su
      cuenta: el visor pide confirmacion a traves de esta capacidad. Abierta

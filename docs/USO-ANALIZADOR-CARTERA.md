@@ -34,12 +34,27 @@ Eso vive solo en ese equipo.
 
 | Destino | Qué usar |
 |---|---|
-| **Que vean la herramienta completa** | **Publicar este corte en el enlace** → compartir el enlace |
+| **Que vean la herramienta completa** | **Descargar informe para enviar** → mandar el archivo |
+| Lo mismo, por enlace | **Publicar este corte en el enlace** → compartir el enlace |
 | WhatsApp rápido | **Enviar como imagen** → adjuntar como foto |
 | Correo formal | **Guardar como PDF** → adjuntar |
 | Correo o chat escrito | **Como texto** → copiar → pegar |
 
-### El enlace compartido (lo más completo)
+### El informe como archivo (funciona siempre)
+
+**Descargar informe para enviar** genera un `.html` de unos 240 KB que contiene
+la herramienta entera con los datos del corte dentro.
+
+Quien lo recibe lo abre con doble clic y ve **todo**: las cuatro pestañas, la
+búsqueda, el ordenamiento y la impresión. En el celular también.
+
+- No necesita cuenta de nada, ni instalar nada, ni siquiera internet.
+- Se abre en Chrome, Edge, Safari o Firefox, en PC o en celular.
+
+> **Si lo envías por correo:** algunos servidores bloquean los adjuntos `.html`.
+> Si no llega, comprímelo en `.zip` primero. Por WhatsApp se envía como documento.
+
+### El enlace compartido
 
 En la pestaña **Gerencia**, al final, el botón **Publicar este corte en el
 enlace** guarda los datos del corte dentro de la propia página publicada.
