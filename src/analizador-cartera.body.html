@@ -1430,13 +1430,32 @@ function canvasABlob(cv){ return new Promise(r => cv.toBlob(r, "image/png")); }
 
 async function guardarImagen(cv, nombre, btn){
   const blob = await canvasABlob(cv);
+  const listo = () => { if (!btn) return; const o = btn.textContent;
+    btn.textContent = "✓ Descargada"; setTimeout(()=>btn.textContent=o, 1800); };
+
+  /* Abierta desde el enlace compartido, la pagina no puede descargar por su
+     cuenta: el visor pide confirmacion a traves de esta capacidad. Abierta
+     desde el archivo guardado en el disco, no existe y se usa la descarga
+     normal del navegador. */
+  try {
+    const d = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (d){ await d.save({ filename: nombre, data: blob }); listo(); return; }
+  } catch(err){
+    if (err && err.code === "declined") return;          // el usuario dijo que no
+    if (err && err.code === "rate_limited"){
+      if (btn){ const o = btn.textContent; btn.textContent = "Espera un momento";
+                setTimeout(()=>btn.textContent=o, 2200); }
+      return;
+    }
+    /* cualquier otro caso: se intenta la descarga normal */
+  }
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = nombre;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
-  if (btn){ const o = btn.textContent; btn.textContent = "✓ Descargada";
-            setTimeout(()=>btn.textContent=o, 1800); }
+  listo();
 }
 
 async function copiarImagen(cv, btn){
