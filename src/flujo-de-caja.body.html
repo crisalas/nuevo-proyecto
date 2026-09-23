@@ -1,0 +1,1040 @@
+<title>Flujo de Caja 13 Semanas</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+:root{
+  color-scheme:light;
+  --bg:#f4f4f1; --surface:#fcfcfb; --surface-2:#f7f7f5;
+  --border:#e3e2dd; --border-strong:#cfcec8;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#82817b;
+  --pos:#2a78d6; --neg:#d03b3b; --cero:#b8b7b0;
+  --ing:#2a78d6; --egr:#eb6834;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --accent:#2a78d6;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 1px 3px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#141413; --surface:#1a1a19; --surface-2:#222221;
+  --border:#333331; --border-strong:#454542;
+  --ink:#fff; --ink-2:#c3c2b7; --ink-3:#8f8e85;
+  --pos:#3987e5; --neg:#e66767; --cero:#54534e;
+  --ing:#3987e5; --egr:#d95926;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141413; --surface:#1a1a19; --surface-2:#222221;
+  --border:#333331; --border-strong:#454542;
+  --ink:#fff; --ink-2:#c3c2b7; --ink-3:#8f8e85;
+  --pos:#3987e5; --neg:#e66767; --cero:#54534e;
+  --ing:#3987e5; --egr:#d95926;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 72px}
+h1,h2,h3{margin:0;font-weight:640;letter-spacing:-.011em}
+h1{font-size:19px} h2{font-size:15px} h3{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:7px;background:var(--accent);color:#fff;flex:none;
+  display:grid;place-items:center;font-size:15px}
+.sub{font-size:12px;color:var(--ink-3);margin-top:1px}
+.acts{display:flex;gap:7px;flex-wrap:wrap}
+button{font:inherit;font-size:13px;font-weight:520;padding:6px 12px;border-radius:7px;
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+button:hover{background:var(--surface-2);border-color:var(--ink-3)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{filter:brightness(1.08)}
+.drop{border:1.5px dashed var(--border-strong);border-radius:12px;background:var(--surface);
+  padding:38px 24px;text-align:center}
+.drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.drop h2{font-size:16px;margin-bottom:6px}
+.drop p{color:var(--ink-2);margin:0 auto 14px;max-width:520px;font-size:13px}
+.drop .hint{font-size:12px;color:var(--ink-3);margin-top:12px}
+.files{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
+.fchip{display:flex;align-items:center;gap:8px;padding:8px 13px;border-radius:9px;font-size:12.5px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--ink-3)}
+.fchip.ok{border-color:var(--good);color:var(--ink)}
+.fchip b{font-weight:620}
+.tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:8px 14px;font-size:13.5px;font-weight:540;color:var(--ink-3);cursor:pointer;
+  border:0;background:none;border-bottom:2px solid transparent;border-radius:0;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card>header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.card>header .note{font-size:12px;color:var(--ink-3)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 15px;box-shadow:var(--shadow)}
+.kpi .lbl{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.kpi .val{font-size:24px;font-weight:660;letter-spacing:-.02em;margin-top:5px;line-height:1.15}
+.kpi .foot{font-size:12px;color:var(--ink-2);margin-top:4px}
+.kpi.bad .val{color:var(--neg)} .kpi.ok .val{color:var(--good)}
+.alert{display:flex;gap:11px;padding:11px 13px;border-radius:9px;margin-bottom:8px;
+  border:1px solid var(--border);background:var(--surface-2);align-items:flex-start}
+.alert .ico{flex:none;width:19px;height:19px;border-radius:5px;display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:#fff;margin-top:1px}
+.alert.crit{border-color:color-mix(in srgb,var(--crit) 38%,var(--border))}
+.alert.crit .ico{background:var(--crit)}
+.alert.warn{border-color:color-mix(in srgb,var(--warn) 45%,var(--border))}
+.alert.warn .ico{background:var(--warn);color:#3a2a00}
+.alert.ok{border-color:color-mix(in srgb,var(--good) 38%,var(--border))}
+.alert.ok .ico{background:var(--good)}
+.alert.info .ico{background:var(--accent)}
+.alert .t{font-weight:600;font-size:13px}
+.alert .d{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.tblwrap{overflow-x:auto;margin:0 -18px;padding:0 18px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+th{font-size:11px;font-weight:620;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);background:var(--surface)}
+th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover{background:var(--surface-2)}
+tr.deficit td{background:color-mix(in srgb,var(--crit) 8%,transparent)}
+tr.deficit:hover td{background:color-mix(in srgb,var(--crit) 13%,transparent)}
+td.name{white-space:normal;min-width:180px;max-width:300px;font-weight:520}
+.pill{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;font-weight:620}
+.pill.crit{background:color-mix(in srgb,var(--crit) 15%,transparent);color:var(--neg)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 22%,transparent);color:#8a6100}
+.pill.ok{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+.pill.est{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent)}
+:root[data-theme="dark"] .pill.warn,:root:not([data-theme="light"]) .pill.warn{color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);
+  font-size:11.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.pgroup{border:1px solid var(--border);border-radius:10px;padding:13px 14px;background:var(--surface-2)}
+.pgroup h3{margin-bottom:10px;color:var(--ink-2)}
+.prow{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.prow label{flex:1;font-size:12.5px;color:var(--ink-2);min-width:0}
+.prow input{width:118px;flex:none;font:inherit;font-size:12.5px;padding:4px 8px;text-align:right;
+  border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.prow input.dia{width:48px}
+.prow small{font-size:11px;color:var(--ink-3);flex:none;width:26px}
+.nota{font-size:12px;color:var(--ink-3);margin:10px 0 0;line-height:1.5}
+.empty{text-align:center;padding:34px 20px;color:var(--ink-3);font-size:13px}
+.err{background:color-mix(in srgb,var(--crit) 10%,var(--surface));border:1px solid var(--crit);
+  padding:12px 14px;border-radius:9px;margin-bottom:14px;font-size:13px}
+.tip{position:fixed;pointer-events:none;z-index:99;background:var(--ink);color:var(--bg);
+  padding:6px 9px;border-radius:6px;font-size:12px;font-weight:520;opacity:0;transition:opacity .1s;max-width:260px}
+.tip.on{opacity:1}
+.foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--border);
+  font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hidden{display:none!important}
+.slider{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.slider label{font-size:12.5px;color:var(--ink-2);flex:1}
+.slider input[type=range]{flex:none;width:140px;accent-color:var(--accent)}
+.slider b{font-size:12.5px;width:78px;text-align:right;font-variant-numeric:tabular-nums}
+@media print{
+  :root{--bg:#fff;--surface:#fff;--surface-2:#f4f4f2;--border:#ccc;--ink:#000;--ink-2:#333;--ink-3:#555}
+  body{background:#fff}
+  .noprint,.tabs,.acts,.drop{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .card,.kpi{box-shadow:none;break-inside:avoid}
+  .kpis{grid-template-columns:repeat(4,1fr);gap:7px}
+  .kpi .val{font-size:17px}
+  table{font-size:10.5px} th,td{padding:4px 6px}
+  @page{margin:12mm}
+}
+@media (max-width:640px){
+  .wrap{padding:14px 12px 56px}
+  .kpi .val{font-size:20px}
+  .prow input{width:100px}
+}
+</style>
+
+<div class="wrap">
+  <div class="top noprint">
+    <div class="brand">
+      <div class="logo">◲</div>
+      <div><h1>Flujo de Caja 13 Semanas</h1>
+        <div class="sub" id="subtitle">Carga los dos informes de Oceanic</div></div>
+    </div>
+    <div class="acts" id="actions"></div>
+  </div>
+
+  <div id="errbox"></div>
+
+  <div id="dropzone" class="drop">
+    <h2>Arrastra aquí los dos informes de Oceanic</h2>
+    <p>La <strong>cartera por edades</strong> (lo que te deben) y las <strong>cuentas por pagar</strong>
+       (lo que debes). Tal como salen del sistema, sin limpiar. Puedes soltarlos juntos o uno por uno.</p>
+    <div class="files">
+      <div class="fchip" id="chip-car">○ <b>Cartera</b> — pendiente</div>
+      <div class="fchip" id="chip-cxp">○ <b>Cuentas por pagar</b> — pendiente</div>
+    </div>
+    <button class="primary" id="pick">Seleccionar archivos</button>
+    <button id="demo">Ver una demostración</button>
+    <input type="file" id="file" accept=".xlsx,.xls" multiple style="display:none">
+    <div class="hint">Todo se procesa dentro de tu navegador. Nada se sube a ningún servidor.</div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="tabs noprint" role="tablist">
+      <button class="tab" role="tab" data-v="pro" aria-selected="true">Proyección</button>
+      <button class="tab" role="tab" data-v="pag" aria-selected="false">A quién pagar</button>
+      <button class="tab" role="tab" data-v="pp"  aria-selected="false">Pronto pago</button>
+      <button class="tab" role="tab" data-v="par" aria-selected="false">Parámetros</button>
+    </div>
+    <div id="view-pro"></div>
+    <div id="view-pag" class="hidden"></div>
+    <div id="view-pp"  class="hidden"></div>
+    <div id="view-par" class="hidden"></div>
+  </div>
+
+  <div class="foot"><span id="footinfo">Flujo de Caja 13 Semanas</span>
+    <span>Los datos nunca salen de este navegador</span></div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   FLUJO DE CAJA A 13 SEMANAS
+   Cruza la cartera por cobrar y las cuentas por pagar de Oceanic con los
+   costos fijos de la empresa, y proyecta el saldo de caja semana a semana.
+   Sin librerias externas: el .xlsx se lee con el descompresor del navegador.
+   ========================================================================== */
+
+const $  = s => document.querySelector(s);
+const el = (t,c,h) => { const n=document.createElement(t); if(c)n.className=c; if(h!=null)n.innerHTML=h; return n; };
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const numero = v => { const n = typeof v==="number"?v:parseFloat(String(v==null?"":v).replace(/[^\d.-]/g,"")); return isFinite(n)?n:null; };
+const money = v => (v<0?"-$":"$") + Math.round(Math.abs(v||0)).toLocaleString("es-CO");
+function moneyM(v){
+  const a=Math.abs(v||0), s=v<0?"-":"";
+  if (a>=1e9) return s+"$"+(a/1e6).toLocaleString("es-CO",{maximumFractionDigits:0})+" M";
+  if (a>=1e6) return s+"$"+(a/1e6).toLocaleString("es-CO",{maximumFractionDigits:1})+" M";
+  return money(v);
+}
+const pct = (a,b) => !b ? "0%" : (a/b*100).toFixed(1).replace(".",",")+"%";
+const EPOCA = Date.UTC(1899,11,30);
+const serialADate = s => s==null ? null : new Date(EPOCA + Math.round(s)*864e5);
+const fdate = d => !d?"":String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear();
+const fcorto = d => !d?"":String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0");
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const flargo = d => !d?"":d.getUTCDate()+" de "+MESES[d.getUTCMonth()]+" de "+d.getUTCFullYear();
+const dsuma = (d,n) => new Date(d.getTime()+n*864e5);
+const clave  = d => d.toISOString().slice(0,10);
+
+/* ---------- lector .xlsx (ZIP + inflate nativo + XML) ---------------------- */
+async function inflateRaw(bytes){
+  if (typeof DecompressionStream==="undefined") throw new Error("Tu navegador no soporta descompresión nativa. Usa Chrome o Edge actualizado.");
+  const s = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+async function unzip(buffer){
+  const dv=new DataView(buffer), u8=new Uint8Array(buffer), dec=new TextDecoder("utf-8");
+  let eocd=-1;
+  for (let i=u8.length-22;i>=Math.max(0,u8.length-66000);i--) if (dv.getUint32(i,true)===0x06054b50){ eocd=i; break; }
+  if (eocd<0) throw new Error("El archivo no parece ser un .xlsx válido.");
+  const n=dv.getUint16(eocd+10,true); let off=dv.getUint32(eocd+16,true); const out={};
+  for (let i=0;i<n;i++){
+    if (dv.getUint32(off,true)!==0x02014b50) break;
+    const met=dv.getUint16(off+10,true), cs=dv.getUint32(off+20,true);
+    const nl=dv.getUint16(off+28,true), xl=dv.getUint16(off+30,true), cl=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true), name=dec.decode(u8.subarray(off+46,off+46+nl));
+    const start=lho+30+dv.getUint16(lho+26,true)+dv.getUint16(lho+28,true);
+    if (/\.xml$/i.test(name)){
+      const raw=u8.subarray(start,start+cs);
+      out[name]=dec.decode(met===0?raw:await inflateRaw(raw));
+    }
+    off+=46+nl+xl+cl;
+  }
+  return out;
+}
+async function leerHoja(buffer){
+  const files=await unzip(buffer), P=new DOMParser();
+  const NS="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+  let shared=[];
+  const ssn=Object.keys(files).find(n=>/sharedStrings\.xml$/i.test(n));
+  if (ssn){
+    const d=P.parseFromString(files[ssn],"application/xml");
+    shared=Array.from(d.getElementsByTagNameNS(NS,"si")).map(si=>
+      Array.from(si.getElementsByTagNameNS(NS,"t")).map(t=>t.textContent).join(""));
+  }
+  const shn=Object.keys(files).find(n=>/^xl\/worksheets\/.+\.xml$/i.test(n));
+  if (!shn) throw new Error("El archivo no contiene ninguna hoja de cálculo.");
+  const doc=P.parseFromString(files[shn],"application/xml");
+  const filas=[];
+  for (const r of doc.getElementsByTagNameNS(NS,"row")){
+    const c={};
+    for (const cel of r.getElementsByTagNameNS(NS,"c")){
+      const col=(cel.getAttribute("r")||"").replace(/\d+/g,""), t=cel.getAttribute("t");
+      const is=cel.getElementsByTagNameNS(NS,"is")[0], v=cel.getElementsByTagNameNS(NS,"v")[0];
+      let val=null;
+      if (is) val=Array.from(is.getElementsByTagNameNS(NS,"t")).map(x=>x.textContent).join("");
+      else if (v) val = t==="s" ? (shared[+v.textContent] ?? "") : v.textContent;
+      if (val!=null && String(val).trim()!=="") c[col]=String(val).trim();
+    }
+    if (Object.keys(c).length) filas.push(c);
+  }
+  return filas;
+}
+
+/* ---------- reconocer cual de los dos informes es --------------------------- */
+function queInforme(filas){
+  let cart=0, cxp=0;
+  for (const c of filas){
+    if (/^Fact\./i.test(c.A||"") && c.K) cxp++;
+    if (c.A==="01" && c.Q && c.C && isNaN(Number(c.C))) cart++;
+  }
+  if (!cart && !cxp) return null;
+  return cxp > cart ? "cxp" : "cartera";
+}
+
+/* ---------- cartera por edades (lo que nos deben) -------------------------- */
+function leerCartera(filas){
+  const facturas=[]; let cli=null;
+  for (const c of filas){
+    const A=c.A||"";
+    if (/^(SUCURSAL|TOTAL)/i.test(A)) continue;
+    if (A==="01" && c.Q && c.C && isNaN(Number(c.C))){
+      const saldo=numero(c.Q)||0; if (Math.abs(saldo)<0.005 || !cli) continue;
+      facturas.push({ tipo:"cartera", nit:cli.nit, nombre:cli.nombre,
+        doc:c.B||"", fFactura:serialADate(numero(c.F)), fVence:serialADate(numero(c.G)),
+        dias:numero(c.J)||0, valor:numero(c.H)||0, saldo });
+      continue;
+    }
+    if (/^\d{5,}$/.test(A) && c.B && isNaN(Number(c.B))) cli={ nit:A, nombre:c.B };
+  }
+  if (!facturas.length) throw new Error("No se encontraron facturas en el informe de cartera.");
+  return facturas;
+}
+
+/* ---------- cuentas por pagar (lo que debemos) ----------------------------- */
+function leerCxP(filas){
+  const facturas=[]; let prov=null;
+  for (const c of filas){
+    const A=c.A||"";
+    if (/^Fact\./i.test(A) && c.K){
+      const saldo=numero(c.K)||0; if (Math.abs(saldo)<0.005 || !prov) continue;
+      facturas.push({ tipo:"cxp", nit:prov.nit, nombre:prov.nombre,
+        doc:(A.match(/^Fact\.([^.]+)/)||[,""])[1].trim(), detalle:A,
+        fFactura:serialADate(numero(c.B)), fVence:serialADate(numero(c.C)),
+        dias:numero(c.D)||0, saldo });
+      continue;
+    }
+    if (/^\d{5,}$/.test(A) && c.B && isNaN(Number(c.B))) prov={ nit:A, nombre:c.B };
+  }
+  if (!facturas.length) throw new Error("No se encontraron facturas en el informe de cuentas por pagar.");
+  return facturas;
+}
+
+/* fecha de corte = la mas votada por (vencimiento + dias vencidos) */
+function fechaCorte(facturas){
+  const votos=new Map();
+  for (const f of facturas) if (f.dias>0 && f.fVence){
+    const k=f.fVence.getTime()+f.dias*864e5;
+    votos.set(k,(votos.get(k)||0)+1);
+  }
+  let mejor=0,k=null;
+  for (const [t,n] of votos) if (n>mejor){ mejor=n; k=t; }
+  return k ? new Date(k) : facturas.reduce((m,f)=> f.fFactura>m?f.fFactura:m, facturas[0].fFactura);
+}
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   PARAMETROS DE LA EMPRESA
+   Vienen con los valores que nos dio el usuario. Todos son editables en la
+   pestaña Parametros y quedan guardados en el navegador.
+   ========================================================================== */
+const PARAM_KEY = "flujo_parametros_v1";
+
+const PARAMS_BASE = {
+  saldos: [
+    { id:"banc", n:"Bancolombia",  v: 90348520 },
+    { id:"davi", n:"Davivienda",   v:  7819775 },
+    { id:"caja", n:"Caja mayor",   v:  5000000 }
+  ],
+  fijos: [
+    { id:"nom1", n:"Nómina 1ª quincena",        v:35000000, dia:15, tipo:"mensual" },
+    { id:"nom2", n:"Nómina 2ª quincena",        v:40000000, dia:30, tipo:"mensual" },
+    { id:"ret",  n:"Retención en la fuente",    v:45000000, dia:15, tipo:"mensual" },
+    { id:"ss",   n:"Seguridad social",          v:12000000, dia:11, tipo:"mensual" },
+    { id:"arr",  n:"Arriendos (casa 2 + oficina)", v:1677000, dia:15, tipo:"mensual" },
+    { id:"ser",  n:"Servicios públicos",        v: 1200000, dia:13, tipo:"mensual" },
+    { id:"ces",  n:"Cuota crédito cesantías",   v: 4000000, dia:20, tipo:"mensual" },
+    { id:"tel",  n:"Telefonía e internet",      v:  600000, dia:20, tipo:"mensual" },
+    { id:"via",  n:"Tarjetas de viáticos",      v: 5000000, dia: 1, tipo:"mensual" },
+    { id:"lea",  n:"Leasing Bancolombia",       v: 8000000, dia:15, tipo:"mensual" },
+    { id:"ica",  n:"ICA (bimestral)",           v:10000000, fecha:"2026-11-12", tipo:"fecha" },
+    { id:"iva",  n:"IVA (cuatrimestral)",       v:14000000, fecha:"2026-12-12", tipo:"fecha" }
+  ],
+  ventas: 152000000,        // facturación nueva esperada por semana
+  plazoVenta: 30,           // días de plazo que se le da al cliente
+  retrasoCliente: 15,       // días que en promedio se demoran en pagar de más
+  recuperaVencido: 35,      // % de la cartera vencida que se recupera en 13 semanas
+  /* proveedores cuyo saldo en Oceanic no refleja lo que se paga de verdad:
+     se excluyen del flujo y su cuota real entra como costo fijo */
+  excluidos: ["BANCOLOMBIA"],
+  /* acuerdos de pago en un día fijo del mes, sin importar el vencimiento */
+  acuerdos: [
+    { prov:"QUINTERO", dia:5, nota:"combustible" },
+    { prov:"ALCALA",   dia:5, nota:"combustible" }
+  ],
+  /* proveedores estratégicos: se pagan aunque no den descuento */
+  estrategicos: ["CEVA"],
+  /* descuentos por pronto pago (% sobre el saldo) */
+  prontoPago: [
+    { prov:"CHALVER", pct:10 }, { prov:"EDO", pct:10 },
+    { prov:"RED AGROVETERINARIA", pct:6 },
+    { prov:"BIOARA", pct:5 }, { prov:"SERVINSUMOS", pct:5 },
+    { prov:"OURO FINO", pct:4 },
+    { prov:"BASIC FARM", pct:3 }, { prov:"COOPERATIVA DE GANADEROS", pct:3 },
+    { prov:"DESARROLLO QUIMICO", pct:3 }
+  ]
+};
+
+function leerParams(){
+  let g={};
+  try { g = JSON.parse(localStorage.getItem(PARAM_KEY)) || {}; } catch(e){}
+  const p = JSON.parse(JSON.stringify(PARAMS_BASE));
+  for (const k of ["ventas","plazoVenta","retrasoCliente","recuperaVencido"])
+    if (typeof g[k] === "number") p[k] = g[k];
+  if (g.saldos) p.saldos.forEach(s => { if (typeof g.saldos[s.id]==="number") s.v = g.saldos[s.id]; });
+  if (g.fijos)  p.fijos.forEach(f => { const x=g.fijos[f.id];
+    if (x){ if (typeof x.v==="number") f.v=x.v; if (typeof x.dia==="number") f.dia=x.dia; if (x.fecha) f.fecha=x.fecha; } });
+  return p;
+}
+function guardarParams(p){
+  const g = { ventas:p.ventas, plazoVenta:p.plazoVenta, retrasoCliente:p.retrasoCliente,
+              recuperaVencido:p.recuperaVencido, saldos:{}, fijos:{} };
+  p.saldos.forEach(s => g.saldos[s.id]=s.v);
+  p.fijos.forEach(f => g.fijos[f.id]={ v:f.v, dia:f.dia, fecha:f.fecha });
+  try { localStorage.setItem(PARAM_KEY, JSON.stringify(g)); } catch(e){}
+}
+
+const coincide = (nombre, lista) => lista.some(x => nombre.toUpperCase().includes(
+  (typeof x === "string" ? x : x.prov).toUpperCase()));
+const buscaRegla = (nombre, lista) => lista.find(x => nombre.toUpperCase().includes(x.prov.toUpperCase()));
+
+/* ============================================================================
+   MOTOR DE PROYECCION
+   ========================================================================== */
+function proyectar(datos, P){
+  const corte = datos.corte;
+  const ini = s => dsuma(corte, s*7 + 1);            // lunes de cada semana proyectada
+  const fin = s => dsuma(corte, s*7 + 7);
+  const horizonte = dsuma(corte, 13*7);
+
+  const ingresos = new Map(), egresos = new Map(), detIng = new Map(), detEgr = new Map();
+  const suma = (mapa, det, fecha, valor, etiqueta) => {
+    if (!fecha || valor <= 0) return;
+    const k = clave(fecha);
+    mapa.set(k, (mapa.get(k)||0) + valor);
+    if (!det.has(k)) det.set(k, []);
+    det.get(k).push({ etiqueta, valor });
+  };
+
+  /* --- INGRESOS ------------------------------------------------------------ */
+  let vencidoCartera = 0;
+  for (const f of datos.cartera || []){
+    if (f.dias > 0){ vencidoCartera += f.saldo; continue; }
+    suma(ingresos, detIng, dsuma(f.fVence, P.retrasoCliente), f.saldo, f.nombre + " · fact. " + f.doc);
+  }
+  /* Recuperación de la cartera ya vencida. No entra pareja: lo que se logra
+     cobrar se cobra sobre todo en las primeras semanas, y después cuesta cada
+     vez más. Por eso el reparto va decayendo. */
+  const recupera = vencidoCartera * P.recuperaVencido / 100;
+  const CURVA = [18,15,12,10,8,7,6,5,5,4,4,3,3];
+  const sumaCurva = CURVA.reduce((a,b)=>a+b,0);
+  for (let s = 0; s < 13; s++)
+    suma(ingresos, detIng, dsuma(corte, s*7 + 4), recupera*CURVA[s]/sumaCurva,
+         "Recaudo de cartera vencida (estimado)");
+  // ventas nuevas: se facturan cada semana y se cobran al plazo + retraso
+  for (let s = 0; s < 13; s++)
+    suma(ingresos, detIng, dsuma(corte, s*7 + 4 + P.plazoVenta + P.retrasoCliente),
+         P.ventas, "Ventas nuevas de la semana " + (s+1) + " (estimado)");
+
+  /* --- EGRESOS: cuentas por pagar ----------------------------------------- */
+  const ajustes = [];
+  for (const f of datos.cxp || []){
+    if (coincide(f.nombre, P.excluidos)) continue;              // su cuota real entra como costo fijo
+    let fecha = f.fVence;
+    const ac = buscaRegla(f.nombre, P.acuerdos);
+    if (ac){                                                     // acuerdo: día fijo del mes
+      let d = new Date(Date.UTC(corte.getUTCFullYear(), corte.getUTCMonth(), ac.dia));
+      if (d <= corte) d = new Date(Date.UTC(corte.getUTCFullYear(), corte.getUTCMonth()+1, ac.dia));
+      fecha = d;
+    } else if (fecha <= corte){
+      fecha = dsuma(corte, 3);                                   // ya vencida: se paga esta semana
+    }
+    suma(egresos, detEgr, fecha, f.saldo, f.nombre + " · fact. " + f.doc);
+  }
+
+  /* --- EGRESOS: costos fijos ---------------------------------------------- */
+  for (const c of P.fijos){
+    if (c.tipo === "fecha"){
+      const d = new Date(c.fecha + "T00:00:00Z");
+      if (d > corte && d <= horizonte) suma(egresos, detEgr, d, c.v, c.n);
+      continue;
+    }
+    for (let m = 0; m <= 4; m++){
+      const base = new Date(Date.UTC(corte.getUTCFullYear(), corte.getUTCMonth() + m, 1));
+      const ult  = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth()+1, 0)).getUTCDate();
+      const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), Math.min(c.dia, ult)));
+      if (d > corte && d <= horizonte) suma(egresos, detEgr, d, c.v, c.n);
+    }
+  }
+
+  /* --- ARMAR LAS 13 SEMANAS ------------------------------------------------ */
+  const caja0 = P.saldos.reduce((s,x)=>s+x.v, 0);
+  let saldo = caja0;
+  const semanas = [];
+  for (let s = 0; s < 13; s++){
+    const a = ini(s), b = fin(s);
+    let i = 0, e = 0, di = [], de = [];
+    for (const [k,v] of ingresos){ const d=new Date(k+"T00:00:00Z");
+      if (d>=a && d<=b){ i+=v; di.push(...(detIng.get(k)||[])); } }
+    for (const [k,v] of egresos){ const d=new Date(k+"T00:00:00Z");
+      if (d>=a && d<=b){ e+=v; de.push(...(detEgr.get(k)||[])); } }
+    const apertura = saldo; saldo += i - e;
+    semanas.push({ n:s+1, ini:a, fin:b, ingresos:i, egresos:e, neto:i-e,
+                   apertura, cierre:saldo,
+                   detIng:di.sort((x,y)=>y.valor-x.valor), detEgr:de.sort((x,y)=>y.valor-x.valor) });
+  }
+  const peor = semanas.reduce((m,x)=> x.cierre < m.cierre ? x : m, semanas[0]);
+  const primerDeficit = semanas.find(x => x.cierre < 0) || null;
+  return { corte, caja0, semanas, peor, primerDeficit, vencidoCartera, recupera,
+           totalIng: semanas.reduce((s,x)=>s+x.ingresos,0),
+           totalEgr: semanas.reduce((s,x)=>s+x.egresos,0) };
+}
+
+/* ---- valor real de un descuento por pronto pago --------------------------
+   Pagar hoy en vez de al vencimiento es prestarle plata al proveedor a cambio
+   del descuento. La tasa efectiva anual equivalente permite compararlo con lo
+   que cuesta (o rinde) la plata en cualquier otra parte.                    */
+function tasaProntoPago(pct, dias){
+  if (dias <= 0 || pct <= 0 || pct >= 100) return 0;
+  return (Math.pow(1 + pct/(100-pct), 365/dias) - 1) * 100;
+}
+
+function oportunidadesProntoPago(datos, P){
+  const porProv = new Map();
+  for (const f of datos.cxp || []){
+    const r = buscaRegla(f.nombre, P.prontoPago);
+    if (!r) continue;
+    let p = porProv.get(f.nombre);
+    if (!p){ p = { nombre:f.nombre, pct:r.pct, saldo:0, facturas:[], diasProm:0 }; porProv.set(f.nombre, p); }
+    p.saldo += f.saldo; p.facturas.push(f);
+  }
+  const hoy = datos.corte;
+  const lista = [...porProv.values()].map(p => {
+    let pond = 0, saldoFuturo = 0, vencido = 0;
+    for (const f of p.facturas){
+      const d = Math.round((f.fVence - hoy)/864e5);
+      if (d > 0){ pond += d * f.saldo; saldoFuturo += f.saldo; } else vencido += f.saldo;
+    }
+    /* Los días que se anticipan se miden solo sobre lo que aún no vence: lo ya
+       vencido no se está adelantando. Se pone un piso de 10 días porque con
+       plazos muy cortos la tasa anualizada se dispara y deja de ser comparable. */
+    const dias = saldoFuturo ? pond/saldoFuturo : 0;
+    const ea = saldoFuturo ? tasaProntoPago(p.pct, Math.max(dias, 10)) : 0;
+    return { ...p, dias, vencido, saldoFuturo,
+             ahorro: p.saldo*p.pct/100, pagoHoy: p.saldo*(1-p.pct/100), ea,
+             porPeso: p.pct/(100-p.pct)*100 };
+  });
+  lista.sort((a,b)=> b.ea - a.ea || b.ahorro - a.ahorro);
+  return lista;
+}
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   ESTADO Y RENDER
+   ========================================================================== */
+let DATOS = { cartera:null, cxp:null, corte:null, nomCartera:"", nomCxp:"" };
+let P = leerParams();
+let R = null;                                   // resultado de la proyección
+
+/* ---- gráfico de saldo: barras divergentes sobre la línea de cero ---------- */
+function graficoSaldo(sem){
+  const W=700, H=224, M={t:26,b:56,l:8,r:8};
+  const alto=H-M.t-M.b, ancho=W-M.l-M.r, paso=ancho/sem.length, bw=Math.min(paso*0.62, 34);
+  const max=Math.max(...sem.map(s=>Math.abs(s.cierre)), 1);
+  const y0=M.t + alto * (Math.max(...sem.map(s=>s.cierre), 0) / (Math.max(...sem.map(s=>s.cierre),0) - Math.min(...sem.map(s=>s.cierre),0) || 1));
+  const maxP=Math.max(...sem.map(s=>s.cierre), 0), minP=Math.min(...sem.map(s=>s.cierre), 0);
+  const rango=(maxP-minP)||1;
+  const yDe=v => M.t + alto*(maxP - v)/rango;
+  const cero=yDe(0);
+  let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" `+
+        `aria-label="Saldo de caja proyectado por semana" style="max-width:100%;font-family:inherit">`;
+  g+=`<line x1="${M.l}" y1="${cero.toFixed(1)}" x2="${W-M.r}" y2="${cero.toFixed(1)}" style="stroke:var(--border-strong)" stroke-width="1"/>`;
+  sem.forEach((s,i)=>{
+    const cx=M.l + paso*i + paso/2, v=s.cierre;
+    const y=yDe(Math.max(v,0)), h=Math.max(Math.abs(yDe(v)-cero), 2);
+    const col = v<0 ? "var(--neg)" : "var(--pos)";
+    g+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${(v<0?cero:y).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" `+
+       `style="fill:${col}" data-tip="Semana ${s.n} (${fcorto(s.ini)} al ${fcorto(s.fin)}) — cierra en ${money(s.cierre)}"/>`;
+    g+=`<text x="${cx.toFixed(1)}" y="${(H-M.b+30).toFixed(1)}" font-size="10.5" text-anchor="middle" style="fill:var(--ink-3)">${s.n}</text>`;
+    g+=`<text x="${cx.toFixed(1)}" y="${(H-M.b+42).toFixed(1)}" font-size="9" text-anchor="middle" style="fill:var(--ink-3)">${fcorto(s.ini)}</text>`;
+    if (i===0 || v===Math.min(...sem.map(x=>x.cierre)) || i===sem.length-1)
+      g+=`<text x="${cx.toFixed(1)}" y="${(v<0 ? cero+Math.abs(yDe(v)-cero)+12 : y-6).toFixed(1)}" font-size="10" `+
+         `font-weight="640" text-anchor="middle" style="fill:${col}">${moneyM(v)}</text>`;
+  });
+  g+=`<text x="${M.l}" y="14" font-size="11" style="fill:var(--ink-3)">Saldo de caja al cierre de cada semana</text>`;
+  return g+"</svg>";
+}
+
+function kpi(lbl,val,foot,clase){
+  return `<div class="kpi ${clase||""}"><div class="lbl">${esc(lbl)}</div>`+
+         `<div class="val num">${val}</div><div class="foot">${foot||""}</div></div>`;
+}
+
+/* ---- alertas -------------------------------------------------------------- */
+function alertasFlujo(R){
+  const out=[];
+  const d=R.primerDeficit;
+  if (d) out.push({n:"crit", i:"!", t:`La caja se agota en la semana ${d.n} (${fcorto(d.ini)} al ${fcorto(d.fin)})`,
+    d:`Cierra en ${money(d.cierre)}. Faltan ${money(-d.cierre)} para cubrir los compromisos de esa semana.`});
+  else out.push({n:"ok", i:"✓", t:"La caja alcanza durante las 13 semanas",
+    d:`El punto más bajo es la semana ${R.peor.n} con ${money(R.peor.cierre)}.`});
+
+  const brecha = R.totalIng - R.totalEgr;
+  out.push({n: brecha<0 ? "warn":"info", i: brecha<0 ? "▼":"▲",
+    t:`En 13 semanas ${brecha<0?"salen":"entran"} ${moneyM(Math.abs(brecha))} ${brecha<0?"más de lo que entra":"más de lo que sale"}`,
+    d:`Ingresos ${moneyM(R.totalIng)} contra egresos ${moneyM(R.totalEgr)}.`});
+
+  // concentración en un proveedor
+  const porProv=new Map();
+  for (const f of DATOS.cxp||[]) porProv.set(f.nombre,(porProv.get(f.nombre)||0)+f.saldo);
+  const orden=[...porProv.entries()].sort((a,b)=>b[1]-a[1]);
+  const total=orden.reduce((s,x)=>s+x[1],0);
+  if (orden.length && orden[0][1]/total >= 0.35)
+    out.push({n:"warn", i:"◉", t:`${esc(orden[0][0])} concentra el ${pct(orden[0][1],total)} de todo lo que se debe`,
+      d:`Son ${money(orden[0][1])} de ${money(total)}. Cualquier cambio en su plazo mueve el flujo entero.`});
+
+  // semana más pesada
+  const pesada=R.semanas.reduce((m,x)=> x.egresos>m.egresos ? x : m, R.semanas[0]);
+  out.push({n:"info", i:"◷", t:`La semana más pesada es la ${pesada.n} (${fcorto(pesada.ini)}): ${moneyM(pesada.egresos)} en pagos`,
+    d: pesada.detEgr.length ? "Encabeza "+esc(pesada.detEgr[0].etiqueta)+" con "+money(pesada.detEgr[0].valor)+"." : ""});
+
+  const pp=oportunidadesProntoPago(DATOS,P);
+  const ahorro=pp.reduce((s,x)=>s+x.ahorro,0);
+  if (ahorro>0) out.push({n:"info", i:"%", t:`Hay ${money(ahorro)} en descuentos por pronto pago sobre la mesa`,
+    d:`Repartidos en ${pp.length} proveedores. Míralo en la pestaña Pronto pago: algunos rinden más que cualquier inversión.`});
+  return out;
+}
+
+/* ---- vista: proyección ---------------------------------------------------- */
+function renderProyeccion(){
+  const s=R.semanas;
+  let h=`<div class="card"><header><div><h2>Proyección de caja</h2>`+
+    `<div class="note">Corte al ${flargo(R.corte)} · ${(DATOS.cartera||[]).length} facturas por cobrar · ${(DATOS.cxp||[]).length} por pagar</div>`+
+    `</div></header><div class="kpis" style="margin:0">`;
+  h+=kpi("Caja hoy", moneyM(R.caja0), P.saldos.map(x=>esc(x.n)+" "+moneyM(x.v)).join(" · "));
+  h+=kpi("Punto más bajo", moneyM(R.peor.cierre), `semana ${R.peor.n} · ${fcorto(R.peor.ini)}`, R.peor.cierre<0?"bad":"ok");
+  h+=kpi("Entra en 13 semanas", moneyM(R.totalIng), "cartera + ventas estimadas");
+  h+=kpi("Sale en 13 semanas", moneyM(R.totalEgr), "proveedores + costos fijos");
+  h+=`</div></div>`;
+
+  h+=`<div class="card"><header><h2>Requiere decisión</h2><span class="note">según los parámetros actuales</span></header>`;
+  for (const a of alertasFlujo(R))
+    h+=`<div class="alert ${a.n}"><div class="ico">${a.i}</div><div><div class="t">${a.t}</div><div class="d">${a.d}</div></div></div>`;
+  h+=`</div>`;
+
+  h+=`<div class="card"><header><h2>Saldo semana a semana</h2>`+
+     `<span class="note">azul: la caja alcanza · rojo: falta plata</span></header>`+
+     graficoSaldo(s)+
+     `<div class="legend"><span><i style="background:var(--pos)"></i>Saldo positivo</span>`+
+     `<span><i style="background:var(--neg)"></i>Saldo negativo</span>`+
+     `<span style="margin-left:auto">Semanas desde el ${fcorto(R.corte)}</span></div></div>`;
+
+  h+=`<div class="card"><header><h2>Detalle por semana</h2>`+
+     `<span class="note">pasa el cursor por una fila para ver de qué se compone</span></header><div class="tblwrap"><table><thead><tr>`+
+     `<th>Sem</th><th>Desde</th><th class="r">Apertura</th><th class="r">Entra</th><th class="r">Sale</th>`+
+     `<th class="r">Neto</th><th class="r">Cierre</th></tr></thead><tbody>`;
+  for (const w of s){
+    const ti=w.detIng.slice(0,4).map(x=>x.etiqueta+": "+money(x.valor)).join(" · ");
+    const te=w.detEgr.slice(0,4).map(x=>x.etiqueta+": "+money(x.valor)).join(" · ");
+    h+=`<tr class="${w.cierre<0?"deficit":""}">`+
+      `<td><strong>${w.n}</strong></td><td>${fcorto(w.ini)} – ${fcorto(w.fin)}</td>`+
+      `<td class="r">${money(w.apertura)}</td>`+
+      `<td class="r" data-tip="${esc(ti||"sin movimientos")}" style="color:var(--ing)">${money(w.ingresos)}</td>`+
+      `<td class="r" data-tip="${esc(te||"sin movimientos")}" style="color:var(--egr)">${money(w.egresos)}</td>`+
+      `<td class="r">${money(w.neto)}</td>`+
+      `<td class="r"><strong style="color:${w.cierre<0?"var(--neg)":"var(--ink)"}">${money(w.cierre)}</strong></td></tr>`;
+  }
+  h+=`</tbody></table></div></div>`;
+
+  h+=`<div class="card noprint"><header><h2>¿Y si…?</h2><span class="note">mueve los supuestos y mira qué pasa</span></header>`+
+    slider("ventas","Ventas nuevas por semana", P.ventas, 0, 400000000, 5000000, v=>moneyM(v))+
+    slider("retrasoCliente","Los clientes pagan con este retraso", P.retrasoCliente, 0, 90, 1, v=>v+" días")+
+    slider("recuperaVencido","De la cartera vencida se recupera", P.recuperaVencido, 0, 100, 5, v=>v+"%")+
+    `<p class="nota">Estos tres supuestos son los que más mueven la proyección. Ajústalos hasta que reflejen
+     lo que de verdad pasa en la empresa; quedan guardados.</p></div>`;
+  $("#view-pro").innerHTML=h;
+  engancharSliders();
+}
+
+function slider(id,lbl,val,min,max,paso,fmt){
+  return `<div class="slider"><label for="sl-${id}">${esc(lbl)}</label>`+
+    `<input type="range" id="sl-${id}" data-p="${id}" min="${min}" max="${max}" step="${paso}" value="${val}">`+
+    `<b id="sv-${id}">${fmt(val)}</b></div>`;
+}
+function engancharSliders(){
+  const fmt={ ventas:moneyM, retrasoCliente:v=>v+" días", recuperaVencido:v=>v+"%" };
+  document.querySelectorAll("#view-pro input[type=range]").forEach(r => {
+    r.oninput = () => {
+      const k=r.dataset.p, v=+r.value;
+      $("#sv-"+k).textContent = fmt[k](v);
+      P[k]=v;
+    };
+    r.onchange = () => { guardarParams(P); recalcular(); };
+  });
+}
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   VISTA: A QUIEN PAGAR ESTA SEMANA
+   Ordena los pagos por el criterio de la empresa y marca dónde se acaba la caja.
+   ========================================================================== */
+function prioridadPago(f){
+  /* 1 pronto pago rentable · 2 estratégico · 3 vencido · 4 resto */
+  const r = buscaRegla(f.nombre, P.prontoPago);
+  if (r) return { orden:1, motivo:"Pronto pago "+r.pct+"%", clase:"ok" };
+  if (coincide(f.nombre, P.estrategicos)) return { orden:2, motivo:"Proveedor estratégico", clase:"est" };
+  if (f.dias > 0) return { orden:3, motivo:"Vencida hace "+f.dias+" días", clase:"crit" };
+  return { orden:4, motivo:"Al día", clase:"" };
+}
+
+function renderPagos(){
+  const sem = R.semanas[0], sem2 = R.semanas[1];
+  const limite = dsuma(R.corte, 14);
+  const pendientes = (DATOS.cxp||[])
+    .filter(f => !coincide(f.nombre, P.excluidos))
+    .filter(f => f.dias > 0 || (f.fVence && f.fVence <= limite))
+    .map(f => {
+      const p = prioridadPago(f);
+      const r = buscaRegla(f.nombre, P.prontoPago);
+      /* Dentro del grupo de pronto pago manda el ahorro en pesos: capturar
+         primero los descuentos grandes. En los demás grupos manda el monto. */
+      return { ...f, p, peso: r ? f.saldo * r.pct / 100 : f.saldo };
+    })
+    .sort((a,b) => a.p.orden - b.p.orden || b.peso - a.peso);
+
+  /* La caja y los costos fijos se miden sobre las mismas dos semanas que la
+     lista de pagos, para que el corte de "hasta aquí alcanza" sea real. */
+  const disponible = sem.apertura + sem.ingresos + sem2.ingresos;
+  const esFijo = x => P.fijos.some(c => c.n === x.etiqueta);
+  const fijosSem = [...sem.detEgr, ...sem2.detEgr].filter(esFijo).reduce((s,x)=>s+x.valor, 0);
+  const paraProveedores = disponible - fijosSem;
+
+  let h=`<div class="card"><header><div><h2>Pagos de las próximas dos semanas</h2>`+
+    `<div class="note">Orden sugerido: primero lo que da descuento, luego lo estratégico, luego lo vencido</div>`+
+    `</div></header><div class="kpis" style="margin:0">`+
+    kpi("Caja disponible", moneyM(disponible), "saldo de hoy más lo que entra en dos semanas")+
+    kpi("Costos fijos primero", moneyM(fijosSem), "nómina, impuestos y demás de esas dos semanas")+
+    kpi("Queda para proveedores", moneyM(paraProveedores), paraProveedores<0?"no alcanza ni para los fijos":"antes de pagar facturas",
+        paraProveedores<0?"bad":"")+
+    kpi("Pendiente de pagar", moneyM(pendientes.reduce((s,f)=>s+f.saldo,0)), pendientes.length+" facturas")+
+    `</div></div>`;
+
+  h+=`<div class="card"><header><h2>Orden de pago</h2>`+
+     `<span class="note">la línea roja marca dónde se acaba la plata</span></header><div class="tblwrap"><table><thead><tr>`+
+     `<th>#</th><th>Proveedor</th><th>Factura</th><th>Vence</th><th class="r">Valor</th>`+
+     `<th class="r">Acumulado</th><th>Motivo</th></tr></thead><tbody>`;
+  let acum=0, cortado=false;
+  pendientes.forEach((f,i)=>{
+    acum+=f.saldo;
+    const pasa = acum <= paraProveedores;
+    let fila="";
+    if (!pasa && !cortado){
+      cortado=true;
+      fila=`<tr><td colspan="7" style="background:color-mix(in srgb,var(--crit) 12%,transparent);`+
+           `color:var(--neg);font-weight:620;text-align:center;font-size:12px">`+
+           `Aquí se acaba la caja disponible (${money(paraProveedores)}). Lo de abajo hay que negociarlo o aplazarlo.</td></tr>`;
+    }
+    fila+=`<tr><td>${i+1}</td><td class="name">${esc(f.nombre)}</td><td>${esc(f.doc)}</td>`+
+      `<td>${fcorto(f.fVence)}</td><td class="r"><strong>${money(f.saldo)}</strong></td>`+
+      `<td class="r" style="color:${pasa?"var(--ink-3)":"var(--neg)"}">${money(acum)}</td>`+
+      `<td><span class="pill ${f.p.clase}">${esc(f.p.motivo)}</span></td></tr>`;
+    h+=fila;
+  });
+  h+=`</tbody></table></div>`;
+  if (!cortado) h+=`<p class="nota">La caja alcanza para cubrir todos los pagos de estas dos semanas.</p>`;
+  else {
+    const pp = pendientes.filter(f=>f.p.orden===1).reduce((s,f)=>s+f.saldo,0);
+    const es = pendientes.filter(f=>f.p.orden===2).reduce((s,f)=>s+f.saldo,0);
+    h+=`<p class="nota"><strong>El orden es una sugerencia, no una regla.</strong> Los descuentos por pronto pago
+      suman ${money(pp)} y los proveedores estratégicos ${money(es)}: juntos ya superan la caja disponible,
+      así que toca escoger. El descuento es plata segura; el proveedor estratégico es la operación.
+      La herramienta pone el descuento primero porque es medible, pero esa decisión es tuya.</p>`;
+  }
+  h+=`</div>`;
+  $("#view-pag").innerHTML=h;
+}
+
+/* ============================================================================
+   VISTA: PRONTO PAGO
+   ========================================================================== */
+function renderProntoPago(){
+  const lista=oportunidadesProntoPago(DATOS,P);
+  const ahorro=lista.reduce((s,x)=>s+x.ahorro,0);
+  const desembolso=lista.reduce((s,x)=>s+x.pagoHoy,0);
+
+  let h=`<div class="card"><header><div><h2>Descuentos por pronto pago</h2>`+
+    `<div class="note">Cuánto rinde adelantar el pago, comparado con dejar la plata quieta</div></div></header>`+
+    `<div class="kpis" style="margin:0 0 4px">`+
+    kpi("Ahorro disponible", moneyM(ahorro), lista.length+" proveedores con descuento", ahorro>0?"ok":"")+
+    kpi("Hay que desembolsar", moneyM(desembolso), "para capturarlo todo")+
+    kpi("Caja hoy", moneyM(R.caja0), desembolso>R.caja0 ? "no alcanza para todos" : "alcanza")+
+    `</div></div>`;
+
+  h+=`<div class="card"><header><h2>Ordenados por lo que rinden</h2>`+
+     `<span class="note">de mayor a menor rentabilidad</span></header><div class="tblwrap"><table><thead><tr>`+
+     `<th>Proveedor</th><th class="r">Saldo</th><th class="r">Desc.</th><th class="r">Ahorro</th>`+
+     `<th class="r">Pagando hoy</th><th class="r">Anticipas</th><th class="r">Rinde (E.A.)</th>`+
+     `</tr></thead><tbody>`;
+  for (const p of lista){
+    const nivel = p.ea>=60 ? "ok" : p.ea>=25 ? "warn" : "";
+    const rinde = p.saldoFuturo
+      ? `<span class="pill ${nivel}">${p.ea>999?"+999":Math.round(p.ea)}%</span>`
+      : `<span class="pill crit">ya vencido</span>`;
+    const anticipo = p.saldoFuturo ? Math.round(p.dias)+" días" : "—";
+    h+=`<tr><td class="name">${esc(p.nombre)}${p.vencido>0&&p.saldoFuturo>0
+        ? `<br><small style="color:var(--ink-3)">${money(p.vencido)} ya vencido</small>`:""}</td>`+
+      `<td class="r">${money(p.saldo)}</td>`+
+      `<td class="r">${p.pct}%</td><td class="r"><strong style="color:var(--good)">${money(p.ahorro)}</strong></td>`+
+      `<td class="r">${money(p.pagoHoy)}</td><td class="r">${anticipo}</td>`+
+      `<td class="r">${rinde}</td></tr>`;
+  }
+  h+=`</tbody></table></div>`+
+    `<p class="nota"><strong>Cómo leer la última columna.</strong> Es lo que rinde la plata al adelantar el pago,
+     expresado como tasa efectiva anual. Un 45% quiere decir que pagar anticipado a ese proveedor equivale a una
+     inversión que renta 45% al año. Compáralo con lo que te cuesta un crédito o con lo que rinde la plata en el banco:
+     si rinde más, conviene pagar; si rinde menos, conviene esperar al vencimiento.</p>`;
+  if (!lista.length) h+=`<div class="empty">No se encontró ningún proveedor con descuento configurado
+     entre los que tienen saldo. Revísalos en la pestaña Parámetros.</div>`;
+  h+=`</div>`;
+  $("#view-pp").innerHTML=h;
+}
+
+/* ============================================================================
+   VISTA: PARAMETROS
+   ========================================================================== */
+function renderParams(){
+  const fila=(id,lbl,val,extra="")=>`<div class="prow"><label for="p-${id}">${esc(lbl)}</label>${extra}`+
+    `<input type="text" id="p-${id}" data-k="${id}" value="${Math.round(val).toLocaleString("es-CO")}"></div>`;
+  let h=`<div class="card"><header><div><h2>Parámetros de la empresa</h2>`+
+    `<div class="note">Todo lo que no sale de Oceanic. Se guarda en este navegador y se aplica a cada corte.</div>`+
+    `</div><button id="reset">Volver a los valores iniciales</button></header><div class="params">`;
+
+  h+=`<div class="pgroup"><h3>Saldos de hoy</h3>`;
+  P.saldos.forEach(s=>h+=fila("s-"+s.id, s.n, s.v));
+  h+=`<p class="nota">Suma: <strong>${money(P.saldos.reduce((a,b)=>a+b.v,0))}</strong></p></div>`;
+
+  h+=`<div class="pgroup"><h3>Supuestos de ingreso</h3>`+
+    fila("ventas","Ventas nuevas por semana", P.ventas)+
+    `<div class="prow"><label for="p-plazoVenta">Plazo que das al cliente</label>`+
+    `<input type="text" id="p-plazoVenta" data-k="plazoVenta" class="dia" value="${P.plazoVenta}"><small>días</small></div>`+
+    `<div class="prow"><label for="p-retrasoCliente">Retraso promedio de pago</label>`+
+    `<input type="text" id="p-retrasoCliente" data-k="retrasoCliente" class="dia" value="${P.retrasoCliente}"><small>días</small></div>`+
+    `<div class="prow"><label for="p-recuperaVencido">De lo vencido se recupera</label>`+
+    `<input type="text" id="p-recuperaVencido" data-k="recuperaVencido" class="dia" value="${P.recuperaVencido}"><small>%</small></div>`+
+    `<p class="nota">La facturación semanal promedio de tu propio archivo de cartera fue
+     <strong>${moneyM(promedioVentas())}</strong>.</p></div>`;
+
+  h+=`<div class="pgroup" style="grid-column:1/-1"><h3>Costos fijos</h3>`;
+  P.fijos.forEach(c=>{
+    const dia = c.tipo==="fecha"
+      ? `<input type="text" id="p-d-${c.id}" data-k="d-${c.id}" class="dia" value="${c.fecha}" style="width:98px">`
+      : `<input type="text" id="p-d-${c.id}" data-k="d-${c.id}" class="dia" value="${c.dia}">`;
+    h+=`<div class="prow"><label for="p-f-${c.id}">${esc(c.n)}</label>`+
+       `<input type="text" id="p-f-${c.id}" data-k="f-${c.id}" value="${Math.round(c.v).toLocaleString("es-CO")}">`+
+       dia+`<small>${c.tipo==="fecha"?"":"día"}</small></div>`;
+  });
+  h+=`<p class="nota">El mensual se repite cada mes en el día indicado. El de fecha puntual solo esa vez.</p></div>`;
+
+  h+=`</div><div class="prow" style="margin-top:16px;justify-content:flex-end">`+
+     `<button class="primary" id="guardar">Guardar y recalcular</button></div></div>`;
+
+  h+=`<div class="card"><header><h2>Reglas aplicadas a los proveedores</h2>`+
+     `<span class="note">vienen de lo que nos contaste</span></header>`+
+     `<div class="tblwrap"><table><thead><tr><th>Regla</th><th>Aplica a</th><th>Qué hace</th></tr></thead><tbody>`+
+     `<tr><td>Excluido del flujo</td><td class="name">${P.excluidos.join(", ")}</td>`+
+     `<td class="name">Su saldo en Oceanic está cargado completo. Se reemplaza por la cuota mensual real del leasing.</td></tr>`+
+     `<tr><td>Acuerdo de pago</td><td class="name">${P.acuerdos.map(a=>a.prov).join(", ")}</td>`+
+     `<td class="name">Se pagan el día ${P.acuerdos[0].dia} de cada mes, sin importar la fecha de vencimiento.</td></tr>`+
+     `<tr><td>Estratégico</td><td class="name">${P.estrategicos.join(", ")}</td>`+
+     `<td class="name">Se paga aunque no dé descuento: la operación depende de él.</td></tr>`+
+     `<tr><td>Pronto pago</td><td class="name">${P.prontoPago.map(x=>x.prov+" "+x.pct+"%").join(" · ")}</td>`+
+     `<td class="name">Se priorizan en el orden de pago y se evalúan en la pestaña Pronto pago.</td></tr>`+
+     `</tbody></table></div>`+
+     `<p class="nota">Estas reglas están escritas en el código de la herramienta. Para cambiarlas dímelo y las ajusto.</p></div>`;
+  $("#view-par").innerHTML=h;
+
+  $("#guardar").onclick = () => {
+    const leer = k => { const n=$("#p-"+k); if(!n) return null;
+      const x=parseFloat(String(n.value).replace(/[^\d.-]/g,"")); return isFinite(x)?x:null; };
+    P.saldos.forEach(s=>{ const v=leer("s-"+s.id); if(v!==null) s.v=v; });
+    ["ventas","plazoVenta","retrasoCliente","recuperaVencido"].forEach(k=>{ const v=leer(k); if(v!==null) P[k]=v; });
+    P.fijos.forEach(c=>{
+      const v=leer("f-"+c.id); if(v!==null) c.v=v;
+      const n=$("#p-d-"+c.id);
+      if (n){ if (c.tipo==="fecha"){ if(/^\d{4}-\d{2}-\d{2}$/.test(n.value.trim())) c.fecha=n.value.trim(); }
+              else { const d=parseInt(n.value,10); if(d>=1&&d<=31) c.dia=d; } }
+    });
+    guardarParams(P); recalcular();
+    document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.dataset.v==="pro"));
+    ["pro","pag","pp","par"].forEach(v=>$("#view-"+v).classList.toggle("hidden", v!=="pro"));
+    scrollTo({top:0,behavior:"smooth"});
+  };
+  $("#reset").onclick = () => {
+    if (!confirm("¿Volver a los valores con los que se configuró la herramienta?")) return;
+    try { localStorage.removeItem(PARAM_KEY); } catch(e){}
+    P=leerParams(); recalcular();
+  };
+}
+
+function promedioVentas(){
+  const c=DATOS.cartera||[]; if (!c.length) return 0;
+  const porSem=new Map();
+  for (const f of c){ if(!f.fFactura) continue;
+    const k=Math.floor(f.fFactura.getTime()/(7*864e5));
+    porSem.set(k,(porSem.get(k)||0)+f.valor); }
+  const v=[...porSem.entries()].sort((a,b)=>a[0]-b[0]).slice(-10,-1).map(x=>x[1]);
+  return v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0;
+}
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   CARGA DE ARCHIVOS, PESTAÑAS E INICIO
+   ========================================================================== */
+function recalcular(){
+  if (!DATOS.cartera && !DATOS.cxp) return;
+  DATOS.corte = DATOS.corte || fechaCorte([...(DATOS.cxp||[]), ...(DATOS.cartera||[])]);
+  R = proyectar(DATOS, P);
+  renderProyeccion(); renderPagos(); renderProntoPago(); renderParams();
+  $("#subtitle").textContent = "Corte al " + flargo(R.corte);
+  $("#footinfo").textContent = "Flujo de caja · corte " + fdate(R.corte) +
+    " · caja hoy " + money(R.caja0) + " · punto más bajo " + money(R.peor.cierre) +
+    " en la semana " + R.peor.n;
+  $("#actions").innerHTML =
+    `<button id="btnprint">Imprimir / PDF</button>`+
+    `<button id="btnnew">Cargar otros archivos</button>`+
+    `<button id="btntheme" title="Cambiar tema">◐</button>`;
+  $("#btnprint").onclick = () => {
+    document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.dataset.v==="pro"));
+    ["pro","pag","pp","par"].forEach(v=>$("#view-"+v).classList.toggle("hidden", v!=="pro"));
+    setTimeout(()=>print(), 60);
+  };
+  $("#btnnew").onclick = () => {
+    DATOS={ cartera:null, cxp:null, corte:null, nomCartera:"", nomCxp:"" };
+    marcarChips(); $("#app").classList.add("hidden");
+    $("#dropzone").classList.remove("hidden"); $("#errbox").innerHTML="";
+  };
+  $("#btntheme").onclick = () => {
+    const cur=document.documentElement.getAttribute("data-theme");
+    const oscuro = cur ? cur==="dark" : matchMedia("(prefers-color-scheme:dark)").matches;
+    document.documentElement.setAttribute("data-theme", oscuro?"light":"dark");
+  };
+}
+
+function marcarChips(){
+  const c=$("#chip-car"), x=$("#chip-cxp");
+  c.className="fchip"+(DATOS.cartera?" ok":"");
+  c.innerHTML=(DATOS.cartera?"● ":"○ ")+"<b>Cartera</b> — "+(DATOS.cartera?DATOS.cartera.length+" facturas":"pendiente");
+  x.className="fchip"+(DATOS.cxp?" ok":"");
+  x.innerHTML=(DATOS.cxp?"● ":"○ ")+"<b>Cuentas por pagar</b> — "+(DATOS.cxp?DATOS.cxp.length+" facturas":"pendiente");
+}
+
+async function cargar(archivos){
+  $("#errbox").innerHTML="";
+  for (const file of archivos){
+    try {
+      const filas = await leerHoja(await file.arrayBuffer());
+      const tipo  = queInforme(filas);
+      if (!tipo) throw new Error(`"${file.name}" no parece ser la cartera por edades ni las cuentas por pagar de Oceanic.`);
+      if (tipo==="cartera"){ DATOS.cartera=leerCartera(filas); DATOS.nomCartera=file.name; }
+      else { DATOS.cxp=leerCxP(filas); DATOS.nomCxp=file.name; DATOS.corte=fechaCorte(DATOS.cxp); }
+    } catch(err){
+      console.error(err);
+      $("#errbox").innerHTML += `<div class="err"><strong>No se pudo leer ${esc(file.name)}.</strong><br>${esc(err.message||err)}</div>`;
+    }
+  }
+  marcarChips();
+  if (DATOS.cxp){                       // las cuentas por pagar son la base del flujo
+    $("#dropzone").classList.add("hidden");
+    $("#app").classList.remove("hidden");
+    if (!DATOS.cartera)
+      $("#errbox").innerHTML = `<div class="err">Falta el informe de <strong>cartera por edades</strong>. `+
+        `Sin él la proyección solo cuenta las ventas estimadas, no lo que ya te deben.</div>`;
+    recalcular();
+  }
+}
+
+$("#pick").onclick = () => $("#file").click();
+$("#file").onchange = e => { if (e.target.files.length) cargar([...e.target.files]); };
+["dragenter","dragover"].forEach(ev=>document.addEventListener(ev, e=>{
+  e.preventDefault(); $("#dropzone").classList.add("over"); }));
+["dragleave","drop"].forEach(ev=>document.addEventListener(ev, e=>{
+  e.preventDefault(); if (ev==="dragleave" && e.relatedTarget) return;
+  $("#dropzone").classList.remove("over"); }));
+document.addEventListener("drop", e=>{
+  const f=e.dataTransfer && [...e.dataTransfer.files];
+  if (f && f.length) cargar(f);
+});
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected", x===t));
+  ["pro","pag","pp","par"].forEach(v=>$("#view-"+v).classList.toggle("hidden", v!==t.dataset.v));
+});
+
+/* tooltip */
+const tip=$("#tip");
+document.addEventListener("mouseover", e=>{
+  const t=e.target.closest("[data-tip]"); if(!t) return;
+  tip.textContent=t.dataset.tip; tip.classList.add("on");
+});
+document.addEventListener("mousemove", e=>{
+  if (!tip.classList.contains("on")) return;
+  tip.style.left=Math.min(e.clientX+12, innerWidth-tip.offsetWidth-8)+"px";
+  tip.style.top =Math.max(e.clientY-tip.offsetHeight-10, 8)+"px";
+});
+document.addEventListener("mouseout", e=>{ if (e.target.closest("[data-tip]")) tip.classList.remove("on"); });
+
+/* ---- demostración con cifras inventadas ---------------------------------- */
+$("#demo").onclick = () => {
+  let semilla=20260922;
+  const rnd=()=> (semilla=(semilla*1103515245+12345)%2147483648)/2147483648;
+  const corte=new Date(Date.UTC(2026,8,22));
+  const provs=["INSUMOS DEL VALLE SAS","LABORATORIO ANDINO","TRANSPORTES DEL EJE","NUTRICION ANIMAL SA",
+               "DISTRIBUIDORA CENTRAL","EMPAQUES Y PLASTICOS","SERVICIOS TECNICOS SAS","AGROQUIMICOS UNIDOS"];
+  const clis=["GRANJA SANTA ELENA","AGROPECUARIA EL ROBLE","PORCICOLA EL MIRADOR","COMERCIALIZADORA ANDINA",
+              "INVERSIONES LA PRADERA","HACIENDA LOS ALAMOS"];
+  const cxp=[], car=[];
+  provs.forEach((n,i)=>{ for(let k=0;k<3+Math.floor(rnd()*4);k++){
+    const dias=Math.round((rnd()-0.45)*70);
+    cxp.push({ tipo:"cxp", nit:"8"+i, nombre:n, doc:"FC"+(1000+cxp.length), detalle:"",
+      fFactura:dsuma(corte,-30), fVence:dsuma(corte,-dias), dias:Math.max(dias,0),
+      saldo:Math.round((1+rnd()*40)*1e6/1000)*1000 }); }});
+  clis.forEach((n,i)=>{ for(let k=0;k<4+Math.floor(rnd()*5);k++){
+    const dias=Math.round((rnd()**2)*120)-40;
+    car.push({ tipo:"cartera", nit:"9"+i, nombre:n, doc:""+(2000+car.length),
+      fFactura:dsuma(corte,-30-dias), fVence:dsuma(corte,-dias), dias:Math.max(dias,0),
+      valor:0, saldo:Math.round((1+rnd()*35)*1e6/1000)*1000 }); }});
+  car.forEach(f=>f.valor=f.saldo);
+  DATOS={ cartera:car, cxp:cxp, corte, nomCartera:"(demostración)", nomCxp:"(demostración)" };
+  marcarChips();
+  $("#dropzone").classList.add("hidden"); $("#app").classList.remove("hidden");
+  $("#errbox").innerHTML=`<div class="alert warn" style="margin-bottom:14px"><div class="ico">i</div><div>`+
+    `<div class="t">Estás viendo datos de ejemplo</div>`+
+    `<div class="d">Cifras inventadas para mostrar cómo funciona. Carga tus informes de Oceanic para ver el flujo real.</div></div></div>`;
+  recalcular();
+};
+
+marcarChips();
+</script>

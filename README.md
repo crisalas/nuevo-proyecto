@@ -60,8 +60,10 @@ Se usa solo si en algún momento hay un PC donde sí se pueda.
       ([guía de uso](docs/USO-ANALIZADOR-CARTERA.md)) — tramos por vencer / 1-15 /
       16-30 / 31-60 / 61-90 / +90, panel de decisiones, concentración de riesgo,
       hojas de cobro por vendedor, comparativo semanal e impresión a PDF.
-- [ ] **Flujo de Caja a 13 semanas** — cruza cartera por cobrar + cuentas por pagar +
-      costos fijos. Marca la semana de déficit. Incluye simulador de escenarios.
+- [x] **Flujo de Caja a 13 semanas** → `herramientas/flujo-de-caja.html`
+      ([guía de uso](docs/USO-FLUJO-DE-CAJA.md)) — cruza cartera por cobrar,
+      cuentas por pagar y costos fijos. Marca la semana de déficit, ordena a quién
+      pagar primero, evalúa los descuentos por pronto pago y simula escenarios.
 - [ ] **Generador de cartas de cobro** — textos personalizados en tres tonos
       (recordatorio / requerimiento / prejurídico), listos para pegar en Gmail o bajar en PDF.
 
