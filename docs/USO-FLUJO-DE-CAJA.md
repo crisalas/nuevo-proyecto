@@ -75,12 +75,38 @@ Están en **Parámetros** y también como deslizadores en **Proyección**:
 
 | Supuesto | Valor inicial | De dónde sale |
 |---|---|---|
-| Ventas nuevas por semana | $152.000.000 | Promedio de las últimas 9 semanas del propio archivo de cartera |
+| Ventas nuevas por semana | se calcula solo | Promedio semanal de las últimas 9 semanas completas del propio archivo de cartera, por fecha de factura |
 | Retraso promedio de pago | 15 días | Estimado. **Conviene ajustarlo**: es el que más mueve la proyección |
 | De lo vencido se recupera | 35% en 13 semanas | Estimado |
 
 > El recaudo de lo vencido no se reparte parejo: se cobra más en las primeras
 > semanas y cada vez menos. La herramienta usa una curva decreciente.
+
+### De dónde salen las ventas nuevas
+
+La herramienta **no sabe** cuánto se va a vender. Lo estima con lo que la empresa
+ya facturó: agrupa las facturas del archivo de cartera por semana de emisión y
+promedia las últimas nueve completas.
+
+Ese número se **recalcula con cada archivo nuevo**, así que sigue la tendencia
+real del negocio sin que haya que tocarlo. Si se escribe un valor a mano, manda
+ese y deja de recalcularse; para volver al automático está *Volver a los valores
+iniciales* en Parámetros.
+
+**Cuánto pesa el supuesto:**
+
+| Semanas | Qué manda |
+|---|---|
+| 1 a 4 | Casi solo la cartera y las cuentas por pagar que ya existen. Una venta de hoy tarda el plazo más el retraso en volverse plata, así que no alcanza a entrar. |
+| 5 a 13 | Las ventas nuevas dominan. |
+
+### El escenario sin ventas nuevas
+
+El botón **Ver sin ventas nuevas** pone el supuesto en cero y deja solo lo que ya
+está facturado: la cartera por cobrar contra las cuentas por pagar.
+
+Es el escenario más duro —equivale a preguntar "¿y si dejamos de vender hoy?"— y
+sirve para ver el piso real de la caja sin ninguna estimación de por medio.
 
 ---
 

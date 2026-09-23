@@ -406,6 +406,7 @@ function leerParams(){
   const p = JSON.parse(JSON.stringify(PARAMS_BASE));
   for (const k of ["ventas","plazoVenta","retrasoCliente","recuperaVencido"])
     if (typeof g[k] === "number") p[k] = g[k];
+  p.ventasManual = !!g.ventasManual;      // ¿el usuario ya fijó las ventas a mano?
   if (g.saldos) p.saldos.forEach(s => { if (typeof g.saldos[s.id]==="number") s.v = g.saldos[s.id]; });
   if (g.fijos)  p.fijos.forEach(f => { const x=g.fijos[f.id];
     if (x){ if (typeof x.v==="number") f.v=x.v; if (typeof x.dia==="number") f.dia=x.dia; if (x.fecha) f.fecha=x.fecha; } });
@@ -413,7 +414,7 @@ function leerParams(){
 }
 function guardarParams(p){
   const g = { ventas:p.ventas, plazoVenta:p.plazoVenta, retrasoCliente:p.retrasoCliente,
-              recuperaVencido:p.recuperaVencido, saldos:{}, fijos:{} };
+              recuperaVencido:p.recuperaVencido, ventasManual:!!p.ventasManual, saldos:{}, fijos:{} };
   p.saldos.forEach(s => g.saldos[s.id]=s.v);
   p.fijos.forEach(f => g.fijos[f.id]={ v:f.v, dia:f.dia, fecha:f.fecha });
   try { localStorage.setItem(PARAM_KEY, JSON.stringify(g)); } catch(e){}
@@ -685,10 +686,18 @@ function renderProyeccion(){
 
   h+=`<div class="card noprint"><header><h2>¿Y si…?</h2><span class="note">mueve los supuestos y mira qué pasa</span></header>`+
     slider("ventas","Ventas nuevas por semana", P.ventas, 0, 400000000, 5000000, v=>moneyM(v))+
+    `<p class="nota" style="margin:-4px 0 10px">`+
+    (P.ventasManual ? "Valor fijado por ti." :
+     "Calculado con tu propia facturación: promedio de las últimas 9 semanas del archivo de cartera.")+
+    ` <button id="sinventas" style="padding:2px 9px;font-size:12px;margin-left:6px">Ver sin ventas nuevas</button></p>`+
     slider("retrasoCliente","Los clientes pagan con este retraso", P.retrasoCliente, 0, 90, 1, v=>v+" días")+
     slider("recuperaVencido","De la cartera vencida se recupera", P.recuperaVencido, 0, 100, 5, v=>v+"%")+
     `<p class="nota">Estos tres supuestos son los que más mueven la proyección. Ajústalos hasta que reflejen
-     lo que de verdad pasa en la empresa; quedan guardados.</p></div>`;
+     lo que de verdad pasa en la empresa; quedan guardados.</p>
+     <p class="nota"><strong>Sobre las ventas nuevas.</strong> La herramienta no sabe cuánto vas a vender: lo estima
+     con lo que has facturado en las últimas semanas. En las primeras 4 semanas casi no importa, porque una venta
+     de hoy tarda el plazo más el retraso en volverse plata. De la semana 5 en adelante sí manda.
+     Con el botón de arriba puedes ponerlas en cero y ver el escenario más duro: solo lo que ya está facturado.</p></div>`;
   h+=tarjetaCompartir();
   $("#view-pro").innerHTML=h;
   engancharSliders();
@@ -701,6 +710,8 @@ function slider(id,lbl,val,min,max,paso,fmt){
     `<b id="sv-${id}">${fmt(val)}</b></div>`;
 }
 function engancharSliders(){
+  const sv=$("#sinventas");
+  if (sv) sv.onclick = () => { P.ventas=0; P.ventasManual=true; guardarParams(P); recalcular(); };
   const fmt={ ventas:moneyM, retrasoCliente:v=>v+" días", recuperaVencido:v=>v+"%" };
   document.querySelectorAll("#view-pro input[type=range]").forEach(r => {
     r.oninput = () => {
@@ -708,7 +719,8 @@ function engancharSliders(){
       $("#sv-"+k).textContent = fmt[k](v);
       P[k]=v;
     };
-    r.onchange = () => { guardarParams(P); recalcular(); };
+    r.onchange = () => { if (r.dataset.p === "ventas") P.ventasManual = true;
+                         guardarParams(P); recalcular(); };
   });
 }
 </script>
@@ -862,8 +874,13 @@ function renderParams(){
     `<input type="text" id="p-retrasoCliente" data-k="retrasoCliente" class="dia" value="${P.retrasoCliente}"><small>días</small></div>`+
     `<div class="prow"><label for="p-recuperaVencido">De lo vencido se recupera</label>`+
     `<input type="text" id="p-recuperaVencido" data-k="recuperaVencido" class="dia" value="${P.recuperaVencido}"><small>%</small></div>`+
-    `<p class="nota">La facturación semanal promedio de tu propio archivo de cartera fue
-     <strong>${moneyM(promedioVentas())}</strong>.</p></div>`;
+    `<p class="nota">La facturación semanal promedio de tu archivo de cartera es
+     <strong>${moneyM(promedioVentas())}</strong>. `+
+     (P.ventasManual
+       ? `Ahora mismo se está usando el valor que fijaste (${moneyM(P.ventas)}); para volver al calculado,
+          usa «Volver a los valores iniciales».`
+       : `Se está usando ese valor, y se recalcula solo con cada archivo nuevo. Si escribes otro aquí, manda el tuyo.`)+
+     `</p></div>`;
 
   h+=`<div class="pgroup" style="grid-column:1/-1"><h3>Costos fijos</h3>`;
   P.fijos.forEach(c=>{
@@ -898,7 +915,8 @@ function renderParams(){
     const leer = k => { const n=$("#p-"+k); if(!n) return null;
       const x=parseFloat(String(n.value).replace(/[^\d.-]/g,"")); return isFinite(x)?x:null; };
     P.saldos.forEach(s=>{ const v=leer("s-"+s.id); if(v!==null) s.v=v; });
-    ["ventas","plazoVenta","retrasoCliente","recuperaVencido"].forEach(k=>{ const v=leer(k); if(v!==null) P[k]=v; });
+    ["ventas","plazoVenta","retrasoCliente","recuperaVencido"].forEach(k=>{
+      const v=leer(k); if(v!==null){ if (k==="ventas" && v!==P.ventas) P.ventasManual=true; P[k]=v; } });
     P.fijos.forEach(c=>{
       const v=leer("f-"+c.id); if(v!==null) c.v=v;
       const n=$("#p-d-"+c.id);
@@ -913,7 +931,7 @@ function renderParams(){
   $("#reset").onclick = () => {
     if (!confirm("¿Volver a los valores con los que se configuró la herramienta?")) return;
     try { localStorage.removeItem(PARAM_KEY); } catch(e){}
-    P=leerParams(); recalcular();
+    P=leerParams(); P.ventasManual=false; recalcular();
   };
 }
 
@@ -937,6 +955,12 @@ function recalcular(){
   if (!DATOS.cartera && !DATOS.cxp) return;
   /* El flujo arranca en el corte más reciente de los dos informes: proyectar
      desde una fecha ya pasada contaría como pendiente algo que quizá ya se pagó. */
+  /* Mientras el usuario no fije las ventas a mano, se estiman con su propia
+     facturación reciente: el promedio semanal que trae el archivo de cartera. */
+  if (!P.ventasManual && DATOS.cartera && DATOS.cartera.length){
+    const pv = promedioVentas();
+    if (pv > 0) P.ventas = Math.round(pv/1e6)*1e6;
+  }
   const cortes = [DATOS.corteCartera, DATOS.corteCxp].filter(Boolean);
   DATOS.corte = cortes.length ? new Date(Math.max(...cortes.map(d=>d.getTime()))) : null;
   if (!DATOS.corte) DATOS.corte = fechaCorte([...(DATOS.cxp||[]), ...(DATOS.cartera||[])]);
