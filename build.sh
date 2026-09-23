@@ -26,8 +26,10 @@ B64=$(base64 -w0 < src/app.core.html)
   > src/analizador-cartera.body.html
 esqueleto src/analizador-cartera.body.html > herramientas/analizador-cartera.html
 
-# --- Flujo de Caja ---
-cp src/flujo.core.html src/flujo-de-caja.body.html
+# --- Flujo de Caja (también se autopublica) ---
+B64F=$(base64 -w0 < src/flujo.core.html)
+{ cat src/flujo.core.html; printf '\n<script type="text/plain" id="fuente">%s</script>\n' "$B64F"; } \
+  > src/flujo-de-caja.body.html
 esqueleto src/flujo-de-caja.body.html > herramientas/flujo-de-caja.html
 
 for f in herramientas/analizador-cartera.html herramientas/flujo-de-caja.html; do

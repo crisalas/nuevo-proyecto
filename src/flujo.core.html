@@ -125,6 +125,14 @@ td.name{white-space:normal;min-width:180px;max-width:300px;font-weight:520}
 .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--border);
   font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .hidden{display:none!important}
+.share{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sharebox{display:none;margin-top:10px}
+.sharebox.on{display:block}
+.sharebox textarea{width:100%;min-height:220px;line-height:1.5;font-size:12.5px;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:9px 11px;
+  border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--ink)}
+.sharebox .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.sharebox .row small{color:var(--ink-3);font-size:11.5px}
 .slider{display:flex;align-items:center;gap:10px;margin-bottom:9px}
 .slider label{font-size:12.5px;color:var(--ink-2);flex:1}
 .slider input[type=range]{flex:none;width:140px;accent-color:var(--accent)}
@@ -681,8 +689,10 @@ function renderProyeccion(){
     slider("recuperaVencido","De la cartera vencida se recupera", P.recuperaVencido, 0, 100, 5, v=>v+"%")+
     `<p class="nota">Estos tres supuestos son los que más mueven la proyección. Ajústalos hasta que reflejen
      lo que de verdad pasa en la empresa; quedan guardados.</p></div>`;
+  h+=tarjetaCompartir();
   $("#view-pro").innerHTML=h;
   engancharSliders();
+  engancharCompartir();
 }
 
 function slider(id,lbl,val,min,max,paso,fmt){
@@ -1056,4 +1066,358 @@ $("#demo").onclick = () => {
 };
 
 marcarChips();
+</script>
+
+<script>
+"use strict";
+/* ============================================================================
+   COMPARTIR
+   Igual que en el Analizador de Cartera: la página lleva incrustada una copia
+   de su propio código y puede volver a publicarse con los datos del corte
+   dentro, para que quien abra el enlace vea la herramienta completa.
+   ========================================================================== */
+const aSerial  = d => d instanceof Date ? Math.round((d.getTime()-EPOCA)/864e5) : null;
+const b64aTexto = b => new TextDecoder().decode(Uint8Array.from(atob(b), c=>c.charCodeAt(0)));
+
+function empaquetar(){
+  const fc = f => [f.nit, f.nombre, f.doc, aSerial(f.fFactura), aSerial(f.fVence), f.dias, f.saldo, f.valor||0];
+  return {
+    v:1,
+    corteCartera: aSerial(DATOS.corteCartera), corteCxp: aSerial(DATOS.corteCxp),
+    cartera: (DATOS.cartera||[]).map(fc),
+    cxp:     (DATOS.cxp||[]).map(fc),
+    params: { saldos:P.saldos, fijos:P.fijos, ventas:P.ventas, plazoVenta:P.plazoVenta,
+              retrasoCliente:P.retrasoCliente, recuperaVencido:P.recuperaVencido }
+  };
+}
+function desempaquetar(p){
+  const rec = (a,tipo) => ({ tipo, nit:a[0], nombre:a[1], doc:a[2],
+    fFactura:serialADate(a[3]), fVence:serialADate(a[4]), dias:a[5], saldo:a[6], valor:a[7] });
+  DATOS = {
+    cartera: (p.cartera||[]).map(a=>rec(a,"cartera")),
+    cxp:     (p.cxp||[]).map(a=>rec(a,"cxp")),
+    corteCartera: serialADate(p.corteCartera), corteCxp: serialADate(p.corteCxp),
+    corte:null, nomCartera:"(publicado)", nomCxp:"(publicado)"
+  };
+  if (p.params){
+    const q=p.params;
+    ["ventas","plazoVenta","retrasoCliente","recuperaVencido"].forEach(k=>{ if (typeof q[k]==="number") P[k]=q[k]; });
+    if (q.saldos) P.saldos = q.saldos;
+    if (q.fijos)  P.fijos  = q.fijos;
+  }
+}
+function construirDocumento(){
+  const fuente = document.getElementById("fuente");
+  if (!fuente) throw new Error("Esta copia no incluye el código necesario para publicarse.");
+  const b64 = fuente.textContent.trim();
+  const datos = JSON.stringify(empaquetar()).replace(/</g,"\\u003c");
+  return '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n'+
+    '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'+
+    '<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n'+
+    '</head>\n<body>\n' + b64aTexto(b64) +
+    '\n<script type="text/plain" id="fuente">' + b64 + '<\/script>' +
+    '\n<script type="application/json" id="datos">' + datos + '<\/script>' +
+    '\n</body>\n</html>\n';
+}
+
+let API_ARTIFACT;
+function apiArtifact(){
+  if (API_ARTIFACT === undefined)
+    API_ARTIFACT = (window.claude && window.claude.use)
+      ? window.claude.use("artifact").catch(()=>null) : Promise.resolve(null);
+  return API_ARTIFACT;
+}
+async function publicarEnlace(btn, aviso){
+  const api = await apiArtifact(), original = btn.textContent;
+  if (!api){ aviso.textContent = "Esta copia no puede actualizar el enlace. Ábrela desde el enlace compartido."; return; }
+  btn.disabled = true; btn.textContent = "Publicando…";
+  try {
+    await api.publish(construirDocumento());
+    btn.textContent = "✓ Enlace actualizado";
+    aviso.textContent = "Listo. Quien abra el enlace verá este corte.";
+  } catch(err){
+    btn.disabled = false; btn.textContent = original;
+    const c = err && err.code;
+    aviso.textContent = c==="conflict" ? "Alguien más publicó al mismo tiempo. Recarga e inténtalo de nuevo."
+      : (c==="not_writer"||c==="not_granted") ? "No tienes permiso para actualizar este enlace."
+      : "No se pudo publicar" + (err && err.message ? ": "+err.message : ".");
+  }
+}
+async function guardarBlob(blob, nombre, btn){
+  const listo = () => { if(!btn) return; const o=btn.textContent;
+    btn.textContent="✓ Descargado"; setTimeout(()=>btn.textContent=o,2000); };
+  try {
+    const d = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (d){ await d.save({ filename:nombre, data:blob }); listo(); return; }
+  } catch(err){
+    if (err && err.code === "declined") return;
+    if (err && err.code === "rate_limited"){
+      if (btn){ const o=btn.textContent; btn.textContent="Espera un momento"; setTimeout(()=>btn.textContent=o,2200); }
+      return;
+    }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href=url; a.download=nombre; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  listo();
+}
+async function copiar(texto, btn){
+  const ok = () => { if(!btn) return; const o=btn.textContent;
+    btn.textContent="✓ Copiado"; setTimeout(()=>btn.textContent=o,1600); };
+  try { await navigator.clipboard.writeText(texto); ok(); }
+  catch(e){ const ta=el("textarea"); ta.value=texto; ta.style.cssText="position:fixed;top:-9999px";
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); ok(); }
+}
+
+/* ---- resumen en texto ----------------------------------------------------- */
+function textoFlujo(wa){
+  const N = wa ? "*" : "", L = [];
+  L.push(N+"FLUJO DE CAJA — CORTE "+fdate(R.corte)+N);
+  L.push("");
+  L.push("Caja hoy: "+money(R.caja0));
+  L.push("Punto más bajo: "+money(R.peor.cierre)+" (semana "+R.peor.n+", "+fcorto(R.peor.ini)+")");
+  if (R.primerDeficit) L.push("La caja se agota en la semana "+R.primerDeficit.n+" ("+fcorto(R.primerDeficit.ini)+")");
+  else L.push("La caja alcanza durante las 13 semanas.");
+  L.push("");
+  L.push(N+"Las primeras semanas"+N);
+  R.semanas.slice(0, wa?5:13).forEach(w=>{
+    L.push("Sem "+w.n+" ("+fcorto(w.ini)+"): entra "+moneyM(w.ingresos)+
+           " · sale "+moneyM(w.egresos)+" · cierra "+money(w.cierre));
+  });
+  const pp = oportunidadesProntoPago(DATOS,P);
+  const ah = pp.reduce((s,x)=>s+x.ahorro,0);
+  if (ah>0){
+    L.push("");
+    L.push(N+"Descuentos por pronto pago"+N);
+    L.push("Ahorro disponible: "+money(ah)+" en "+pp.length+" proveedores.");
+    pp.slice(0, wa?4:8).forEach(x=>
+      L.push("- "+x.nombre+": "+money(x.ahorro)+" ("+x.pct+"%"+(x.saldoFuturo?", rinde "+Math.round(x.ea)+"% E.A.":"")+")"));
+  }
+  return L.join("\n");
+}
+
+/* ---- informe como imagen -------------------------------------------------- */
+const PAL={ fondo:"#ffffff", tarjeta:"#fbfbfa", borde:"#e3e2dd", suave:"#f1f1ee",
+  ink:"#0b0b0b", ink2:"#52514e", ink3:"#84837d", pos:"#2a78d6", neg:"#d03b3b",
+  crit:"#d03b3b", warn:"#e09400", ok:"#0ca30c", azul:"#2a78d6" };
+const FUENTE='ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+
+function imagenFlujo(escala){
+  const S=escala||2, W=1000, M=44;
+  const cv=document.createElement("canvas");
+  cv.width=W*S; cv.height=6000*S;
+  const c=cv.getContext("2d"); c.scale(S,S);
+  c.fillStyle=PAL.fondo; c.fillRect(0,0,W,6000);
+  let y=M+10;
+  const txt=(t,x,yy,{px=15,peso=400,color=PAL.ink,align="left"}={})=>{
+    c.font=(peso)+" "+px+"px "+FUENTE; c.fillStyle=color; c.textAlign=align; c.fillText(t,x,yy); c.textAlign="left"; };
+  const caja=(x,yy,w,h,r,fill,br)=>{ c.beginPath();
+    c.moveTo(x+r,yy); c.arcTo(x+w,yy,x+w,yy+h,r); c.arcTo(x+w,yy+h,x,yy+h,r);
+    c.arcTo(x,yy+h,x,yy,r); c.arcTo(x,yy,x+w,yy,r); c.closePath();
+    if(fill){c.fillStyle=fill;c.fill();} if(br){c.strokeStyle=br;c.lineWidth=1;c.stroke();} };
+  const parrafo=(t,x,yy,maxW,{px=13,peso=400,color=PAL.ink2,alto=18}={})=>{
+    c.font=peso+" "+px+"px "+FUENTE; c.fillStyle=color;
+    let l="",n=0;
+    for (const p of String(t).split(/\s+/)){
+      const pr=l?l+" "+p:p;
+      if (c.measureText(pr).width>maxW && l){ c.fillText(l,x,yy+n*alto); l=p; n++; } else l=pr;
+    }
+    if(l){ c.fillText(l,x,yy+n*alto); n++; }
+    return n*alto; };
+
+  txt("Flujo de caja · corte "+fdate(R.corte), M, y+18, {px:30,peso:700});
+  y+=30; txt("Proyección a 13 semanas", M, y+14, {px:14.5,color:PAL.ink3});
+  y+=30; c.beginPath(); c.moveTo(M,y); c.lineTo(W-M,y); c.strokeStyle=PAL.borde; c.lineWidth=1; c.stroke();
+  y+=26;
+
+  // indicadores
+  const K=[ {l:"Caja hoy", v:moneyM(R.caja0), p:"suma de bancos y caja"},
+            {l:"Punto más bajo", v:moneyM(R.peor.cierre), p:"semana "+R.peor.n+" · "+fcorto(R.peor.ini), c:R.peor.cierre<0?PAL.neg:PAL.ink},
+            {l:"Entra en 13 semanas", v:moneyM(R.totalIng), p:"cartera y ventas"},
+            {l:"Sale en 13 semanas", v:moneyM(R.totalEgr), p:"proveedores y fijos"} ];
+  const w=(W-M*2-36)/4;
+  K.forEach((k,i)=>{ const x=M+i*(w+12);
+    caja(x,y,w,86,10,PAL.tarjeta,PAL.borde);
+    txt(k.l.toUpperCase(), x+14, y+24, {px:10,peso:700,color:PAL.ink3});
+    txt(k.v, x+14, y+56, {px:23,peso:700,color:k.c||PAL.ink});
+    txt(k.p, x+14, y+75, {px:11.5,color:PAL.ink2}); });
+  y+=110;
+
+  // grafico de saldo
+  txt("Saldo al cierre de cada semana", M, y+16, {px:17,peso:650}); y+=30;
+  const gx=M, gw=W-M*2, gh=170, sem=R.semanas;
+  const maxP=Math.max(...sem.map(s=>s.cierre),0), minP=Math.min(...sem.map(s=>s.cierre),0);
+  const rango=(maxP-minP)||1, yDe=v=>y+gh*(maxP-v)/rango, cero=yDe(0), paso=gw/sem.length, bw=Math.min(paso*.62,38);
+  c.beginPath(); c.moveTo(gx,cero); c.lineTo(gx+gw,cero); c.strokeStyle=PAL.borde; c.stroke();
+  sem.forEach((s,i)=>{ const cx=gx+paso*i+paso/2, v=s.cierre;
+    const top=v<0?cero:yDe(v), h=Math.max(Math.abs(yDe(v)-cero),2);
+    caja(cx-bw/2, top, bw, h, 3, v<0?PAL.neg:PAL.pos);
+    txt(String(s.n), cx, y+gh+34, {px:11,color:PAL.ink3,align:"center"});
+    txt(fcorto(s.ini), cx, y+gh+47, {px:9.5,color:PAL.ink3,align:"center"});
+    if (i===0 || v===minP || i===sem.length-1)
+      txt(moneyM(v), cx, v<0?top+h+13:top-6, {px:10.5,peso:640,color:v<0?PAL.neg:PAL.pos,align:"center"}); });
+  y+=gh+66;
+
+  // alertas
+  txt("Requiere decisión", M, y+16, {px:17,peso:650}); y+=30;
+  const limpio=t=>String(t).replace(/<[^>]*>/g,"").replace(/&amp;/g,"&");
+  for (const a of alertasFlujo(R).slice(0,5)){
+    const col = a.n==="crit"?PAL.crit : a.n==="warn"?PAL.warn : a.n==="ok"?PAL.ok : PAL.azul;
+    const y0=y;
+    const h1=parrafo(limpio(a.t), M+28, y+18, W-M*2-40, {px:14,peso:650,color:PAL.ink,alto:19});
+    const h2=parrafo(limpio(a.d), M+28, y+18+h1+2, W-M*2-40, {px:12.5,alto:17});
+    caja(M, y0, 4, h1+h2+16, 2, col);
+    y = y0 + h1 + h2 + 24;
+  }
+  y+=8;
+
+  // tabla semanal
+  txt("Detalle por semana", M, y+16, {px:17,peso:650}); y+=30;
+  const cols=[0,.16,.42,.66,.99], enc=["Sem","Desde","Entra","Sale","Cierre"];
+  enc.forEach((t,i)=> txt(t.toUpperCase(), M+cols[i]*(W-M*2), y+12,
+    {px:10,peso:700,color:PAL.ink3,align:i>1?"right":"left"}));
+  y+=18; c.beginPath(); c.moveTo(M,y); c.lineTo(W-M,y); c.strokeStyle=PAL.borde; c.stroke(); y+=4;
+  sem.forEach((s,n)=>{
+    if (s.cierre<0) caja(M-8,y-1,W-M*2+16,28,5,"rgba(208,59,59,.07)");
+    else if (n%2) caja(M-8,y-1,W-M*2+16,28,5,PAL.suave);
+    txt(String(s.n), M, y+18, {px:12.5,peso:600});
+    txt(fcorto(s.ini)+" – "+fcorto(s.fin), M+cols[1]*(W-M*2), y+18, {px:12.5,color:PAL.ink2});
+    txt(money(s.ingresos), M+cols[2]*(W-M*2), y+18, {px:12.5,color:PAL.pos,align:"right"});
+    txt(money(s.egresos),  M+cols[3]*(W-M*2), y+18, {px:12.5,color:"#c2571f",align:"right"});
+    txt(money(s.cierre),   M+cols[4]*(W-M*2), y+18, {px:12.5,peso:700,color:s.cierre<0?PAL.neg:PAL.ink,align:"right"});
+    y+=28; });
+  y+=10; c.beginPath(); c.moveTo(M,y); c.lineTo(W-M,y); c.strokeStyle=PAL.borde; c.stroke(); y+=8;
+  txt("Fuente: informes de Oceanic al "+fdate(R.corte)+" · proyección con los parámetros de la empresa",
+      M, y+14, {px:11.5,color:PAL.ink3});
+  y+=20+M;
+
+  const fin=document.createElement("canvas");
+  fin.width=W*S; fin.height=Math.ceil(y)*S;
+  const fc=fin.getContext("2d"); fc.fillStyle=PAL.fondo; fc.fillRect(0,0,fin.width,fin.height);
+  fc.drawImage(cv,0,0,W*S,Math.ceil(y)*S,0,0,W*S,Math.ceil(y)*S);
+  return fin;
+}
+const canvasABlob = cv => new Promise(r => cv.toBlob(r,"image/png"));
+async function copiarImagen(cv, btn){
+  const o = btn?btn.textContent:"";
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": await canvasABlob(cv) })]);
+    if(btn){ btn.textContent="✓ Copiada"; setTimeout(()=>btn.textContent=o,1800); }
+  } catch(e){
+    if(btn){ btn.textContent="No se pudo copiar"; setTimeout(()=>btn.textContent=o,2200); }
+    alert("Este navegador no dejó copiar la imagen.\n\nUsa «Descargar imagen» o mantén presionada la vista previa.");
+  }
+}
+</script>
+
+<script>
+"use strict";
+/* ---- tarjeta de compartir, al final de la Proyección ---------------------- */
+function tarjetaCompartir(){
+  return `<div class="card noprint" id="compartir"><header><h2>Compartir este flujo</h2>`+
+    `<span class="note">todo sale de este mismo corte</span></header>`+
+
+    `<div class="sharebox on" id="pubbox" hidden>`+
+    `<p style="color:var(--ink-2);margin:0 0 10px;font-size:13px">Publica este corte en el enlace de la herramienta. `+
+    `Quien lo abra verá la proyección completa, las cuatro pestañas y podrá imprimirla, igual que tú.</p>`+
+    `<div class="row" style="margin:0"><button class="primary" id="btnpub">Publicar este corte en el enlace</button>`+
+    `<button id="btncopiaenlace">Copiar el enlace</button><small id="pubaviso"></small></div>`+
+    `<p style="color:var(--ink-3);margin:10px 0 0;font-size:12px">El enlace es privado: solo lo abre quien autorices `+
+    `desde el menú <em>Compartir</em> de la página. Quien entre ve los saldos, los proveedores y los costos fijos.</p></div>`+
+
+    `<p style="color:var(--ink-2);margin:14px 0 12px;font-size:13px">Si quien lo recibe <strong>no puede abrir el enlace</strong>, `+
+    `mándale el archivo: se abre en cualquier navegador, sin cuenta ni internet, con todo lo que ves aquí.</p>`+
+    `<div class="share">`+
+    `<button class="primary" id="btnarchivo">Descargar informe para enviar</button>`+
+    `<button id="btnimg">Enviar como imagen</button>`+
+    `<button id="btnpdf2">Guardar como PDF</button>`+
+    `<button data-openbox="box-wa">Como texto (WhatsApp)</button>`+
+    `<button data-openbox="box-mail">Como texto (correo)</button></div>`+
+    `<div class="sharebox" id="imgbox"></div>`+
+    caja("box-wa", textoFlujo(true),  "Pégalo en WhatsApp: los asteriscos se convierten en negrita.")+
+    caja("box-mail", textoFlujo(false), "Pégalo en el cuerpo del correo.")+
+    `</div>`;
+  function caja(id, texto, nota){
+    return `<div class="sharebox" id="${id}"><textarea id="${id}-t" spellcheck="false">${esc(texto)}</textarea>`+
+      `<div class="row"><button class="primary" data-copybox="${id}">Copiar texto</button>`+
+      `<small>${esc(nota)}</small></div></div>`;
+  }
+}
+
+function engancharCompartir(){
+  const cerrarOtras = box => box.parentNode.querySelectorAll(".sharebox").forEach(x=>{ if(x!==box) x.classList.remove("on"); });
+  document.querySelectorAll("#compartir [data-openbox]").forEach(b => b.onclick = () => {
+    const box=$("#"+b.dataset.openbox), abierto=box.classList.contains("on");
+    cerrarOtras(box); box.classList.toggle("on", !abierto);
+    if (!abierto) box.querySelector("textarea").select();
+  });
+  document.querySelectorAll("#compartir [data-copybox]").forEach(b => b.onclick = () =>
+    copiar($("#"+b.dataset.copybox+"-t").value, b));
+
+  $("#btnpdf2").onclick = () => $("#btnprint").click();
+
+  $("#btnarchivo").onclick = e => {
+    const b=e.currentTarget, o=b.textContent;
+    b.disabled=true; b.textContent="Preparando…";
+    setTimeout(async () => {
+      try {
+        await guardarBlob(new Blob([construirDocumento()],{type:"text/html"}),
+          "flujo-de-caja-"+fdate(R.corte).replace(/\//g,"-")+".html", b);
+      } catch(err){ console.error(err); alert("No se pudo generar el archivo: "+(err.message||err)); b.textContent=o; }
+      b.disabled=false;
+    }, 30);
+  };
+
+  $("#btnimg").onclick = e => {
+    const b=e.currentTarget, box=$("#imgbox"), abierto=box.classList.contains("on");
+    cerrarOtras(box);
+    if (abierto){ box.classList.remove("on"); return; }
+    box.classList.add("on");
+    if (box.dataset.listo) return;
+    box.dataset.listo="1";
+    box.innerHTML='<div style="padding:12px 0;color:var(--ink-3);font-size:13px">Generando la imagen…</div>';
+    setTimeout(()=>{
+      let cv;
+      try { cv=imagenFlujo(2); }
+      catch(err){ console.error(err); box.innerHTML='<div class="err">No se pudo generar la imagen: '+esc(err.message||err)+'</div>'; return; }
+      box.innerHTML="";
+      const fila=el("div","row");
+      const bc=el("button","primary","Copiar imagen"), bd=el("button",null,"Descargar imagen");
+      const nota=el("small",null,"En el celular: mantén presionada la imagen para guardarla y enviarla.");
+      bc.onclick=()=>copiarImagen(cv,bc);
+      bd.onclick=()=>canvasABlob(cv).then(bl=>guardarBlob(bl,"flujo-de-caja-"+fdate(R.corte).replace(/\//g,"-")+".png",bd));
+      fila.append(bc,bd,nota);
+      const prev=el("div"); prev.style.marginTop="10px";
+      const img=new Image(); img.src=cv.toDataURL("image/png"); img.alt="Vista previa del informe";
+      img.style.cssText="width:100%;height:auto;border:1px solid var(--border);border-radius:9px;display:block";
+      prev.appendChild(img); box.append(fila, prev);
+    }, 30);
+  };
+
+  apiArtifact().then(api => {
+    const c=$("#pubbox"); if (!c || !api) return;
+    c.hidden=false;
+    $("#btnpub").onclick = e => publicarEnlace(e.currentTarget, $("#pubaviso"));
+    $("#btncopiaenlace").onclick = e => copiar(location.href, e.currentTarget);
+  });
+}
+
+/* ---- al abrir: si el documento trae datos, mostrar el flujo --------------- */
+function abrirDatosIncrustados(){
+  const n=document.getElementById("datos"); if(!n) return;
+  try {
+    desempaquetar(JSON.parse(n.textContent));
+    marcarChips();
+    $("#dropzone").classList.add("hidden");
+    $("#app").classList.remove("hidden");
+    recalcular();
+  } catch(err){
+    console.error(err);
+    $("#errbox").innerHTML='<div class="err">No se pudieron leer los datos publicados en este enlace. '+
+      'Carga los informes de Oceanic para ver el flujo.</div>';
+  }
+}
+if (document.readyState === "loading")
+  document.addEventListener("DOMContentLoaded", abrirDatosIncrustados);
+else abrirDatosIncrustados();
 </script>

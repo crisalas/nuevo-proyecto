@@ -15,6 +15,8 @@ costos fijos de la empresa, y proyecta el saldo de caja semana a semana.
    > herramienta arranca la proyección en el corte más reciente de los dos, y
    > avisa cuando se separan más de 5 días.
 4. Revisa **Proyección**, y antes de pagar mira **A quién pagar**.
+5. Comparte desde la tarjeta al final de la Proyección: enlace, archivo, PDF,
+   imagen o texto. Funciona igual que en el Analizador de Cartera.
 
 ---
 
@@ -26,6 +28,28 @@ costos fijos de la empresa, y proyecta el saldo de caja semana a semana.
 | **A quién pagar** | Con la plata que hay, ¿a quién le pago primero? |
 | **Pronto pago** | ¿Cuáles descuentos conviene tomar y cuánto rinden? |
 | **Parámetros** | Todo lo que no sale de Oceanic: saldos, costos fijos, supuestos |
+
+---
+
+## Cómo compartirlo
+
+Al final de la pestaña **Proyección** está la tarjeta *Compartir este flujo*:
+
+| Destino | Qué usar |
+|---|---|
+| Que vean la herramienta completa | **Descargar informe para enviar** → mandar el archivo |
+| Lo mismo, por enlace | **Publicar este corte en el enlace** → compartir el enlace |
+| WhatsApp rápido | **Enviar como imagen** |
+| Correo formal | **Guardar como PDF** |
+| Chat o correo escrito | **Como texto** |
+
+El archivo y el enlace llevan dentro los dos informes y los parámetros, así que
+quien lo abra ve las cuatro pestañas, puede mover los deslizadores y simular
+escenarios, igual que tú. Sin cuenta, sin instalar nada y sin internet.
+
+> Quien abra el enlace o el archivo ve los saldos en bancos, los proveedores con
+> sus montos y los costos fijos de la empresa. Es información sensible: mándalo
+> solo a quien deba verla.
 
 ---
 
