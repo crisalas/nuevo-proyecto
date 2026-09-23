@@ -11,6 +11,9 @@ costos fijos de la empresa, y proyecta el saldo de caja semana a semana.
 2. Abre `herramientas/flujo-de-caja.html` en Chrome.
 3. Arrastra los dos archivos (juntos o uno por uno). La herramienta reconoce
    cuál es cuál por su estructura.
+   > **Expórtalos el mismo día.** No es obligatorio, pero sí lo ideal: la
+   > herramienta arranca la proyección en el corte más reciente de los dos, y
+   > avisa cuando se separan más de 5 días.
 4. Revisa **Proyección**, y antes de pagar mira **A quién pagar**.
 
 ---
@@ -104,3 +107,22 @@ Hay que tenerlo presente al leer la proyección:
   cada cliente.
 - **No conoce cupos de sobregiro ni créditos disponibles.** Un saldo negativo
   significa "falta plata", no necesariamente "la empresa se quiebra".
+
+---
+
+## Si los dos archivos son de fechas distintas
+
+La herramienta arranca la proyección en el **corte más reciente** de los dos, y
+muestra un aviso cuando la diferencia pasa de 5 días.
+
+| Diferencia | Qué pasa |
+|---|---|
+| Mismo día | Ideal. Todo cuadra. |
+| 1 a 5 días | Se puede usar sin problema. |
+| Más de una semana | Sale el aviso. El archivo viejo trae facturas que quizá ya se pagaron, así que los ingresos salen inflados. |
+
+Funciona igual si cargas uno solo:
+
+- **Solo cuentas por pagar** → proyecta los egresos, y los ingresos solo con las
+  ventas estimadas. Avisa que falta la cartera.
+- **Solo cartera** → no arranca: sin los egresos no hay flujo que proyectar.

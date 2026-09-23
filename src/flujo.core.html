@@ -636,6 +636,16 @@ function renderProyeccion(){
   h+=kpi("Sale en 13 semanas", moneyM(R.totalEgr), "proveedores + costos fijos");
   h+=`</div></div>`;
 
+  const desfase = (DATOS.corteCartera && DATOS.corteCxp)
+    ? Math.round(Math.abs(DATOS.corteCxp - DATOS.corteCartera)/864e5) : 0;
+  if (desfase > 5){
+    const viejo = DATOS.corteCartera < DATOS.corteCxp ? "la cartera" : "las cuentas por pagar";
+    h+=`<div class="card"><div class="alert warn"><div class="ico">!</div><div>`+
+      `<div class="t">Los dos informes son de fechas distintas: ${desfase} días de diferencia</div>`+
+      `<div class="d">Cartera al ${fdate(DATOS.corteCartera)} y cuentas por pagar al ${fdate(DATOS.corteCxp)}. `+
+      `La proyección toma la fecha más reciente, pero ${viejo} puede traer facturas que ya se movieron. `+
+      `Para que cuadre bien, exporta los dos el mismo día.</div></div></div></div>`;
+  }
   h+=`<div class="card"><header><h2>Requiere decisión</h2><span class="note">según los parámetros actuales</span></header>`;
   for (const a of alertasFlujo(R))
     h+=`<div class="alert ${a.n}"><div class="ico">${a.i}</div><div><div class="t">${a.t}</div><div class="d">${a.d}</div></div></div>`;
@@ -915,7 +925,11 @@ function promedioVentas(){
    ========================================================================== */
 function recalcular(){
   if (!DATOS.cartera && !DATOS.cxp) return;
-  DATOS.corte = DATOS.corte || fechaCorte([...(DATOS.cxp||[]), ...(DATOS.cartera||[])]);
+  /* El flujo arranca en el corte más reciente de los dos informes: proyectar
+     desde una fecha ya pasada contaría como pendiente algo que quizá ya se pagó. */
+  const cortes = [DATOS.corteCartera, DATOS.corteCxp].filter(Boolean);
+  DATOS.corte = cortes.length ? new Date(Math.max(...cortes.map(d=>d.getTime()))) : null;
+  if (!DATOS.corte) DATOS.corte = fechaCorte([...(DATOS.cxp||[]), ...(DATOS.cartera||[])]);
   R = proyectar(DATOS, P);
   renderProyeccion(); renderPagos(); renderProntoPago(); renderParams();
   $("#subtitle").textContent = "Corte al " + flargo(R.corte);
@@ -958,8 +972,13 @@ async function cargar(archivos){
       const filas = await leerHoja(await file.arrayBuffer());
       const tipo  = queInforme(filas);
       if (!tipo) throw new Error(`"${file.name}" no parece ser la cartera por edades ni las cuentas por pagar de Oceanic.`);
-      if (tipo==="cartera"){ DATOS.cartera=leerCartera(filas); DATOS.nomCartera=file.name; }
-      else { DATOS.cxp=leerCxP(filas); DATOS.nomCxp=file.name; DATOS.corte=fechaCorte(DATOS.cxp); }
+      if (tipo==="cartera"){
+        DATOS.cartera=leerCartera(filas); DATOS.nomCartera=file.name;
+        DATOS.corteCartera=fechaCorte(DATOS.cartera);
+      } else {
+        DATOS.cxp=leerCxP(filas); DATOS.nomCxp=file.name;
+        DATOS.corteCxp=fechaCorte(DATOS.cxp);
+      }
     } catch(err){
       console.error(err);
       $("#errbox").innerHTML += `<div class="err"><strong>No se pudo leer ${esc(file.name)}.</strong><br>${esc(err.message||err)}</div>`;
