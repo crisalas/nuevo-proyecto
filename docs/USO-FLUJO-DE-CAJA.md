@@ -20,6 +20,27 @@ costos fijos de la empresa, y proyecta el saldo de caja semana a semana.
 
 ---
 
+## Si una casilla no se llena
+
+Al cargar, la herramienta dice **qué archivo entró en qué casilla**:
+
+```
+CARTERA_POR_EDADES_23.xlsx → Cartera (526 facturas)
+cxp_23.xlsx → Cuentas por pagar (187 facturas)
+```
+
+Si los dos archivos caen en la misma casilla, lo avisa en amarillo. Eso quiere
+decir que se exportó **dos veces el mismo informe** de Oceanic.
+
+**Cómo distinguirlos al abrirlos en Excel:**
+
+| Informe | Cómo se ve la primera columna |
+|---|---|
+| Cartera por edades | El NIT del cliente, y las facturas empiezan por `01` |
+| Cuentas por pagar | Cada línea de factura empieza por `Fact.` |
+
+---
+
 ## Los saldos de bancos y caja
 
 Es **lo único que no sale de Oceanic**, y cambia todos los días. Por eso están

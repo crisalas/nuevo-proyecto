@@ -319,8 +319,8 @@ function queInforme(filas){
     if (/^Fact\./i.test(c.A||"") && c.K) cxp++;
     if (c.A==="01" && c.Q && c.C && isNaN(Number(c.C))) cart++;
   }
-  if (!cart && !cxp) return null;
-  return cxp > cart ? "cxp" : "cartera";
+  const tipo = (!cart && !cxp) ? null : (cxp > cart ? "cxp" : "cartera");
+  return { tipo, cart, cxp, filas: filas.length };
 }
 
 /* ---------- cartera por edades (lo que nos deben) -------------------------- */
@@ -1076,22 +1076,46 @@ function marcarChips(){
 
 async function cargar(archivos){
   $("#errbox").innerHTML="";
+  const bitacora = [];                       // qué se hizo con cada archivo
   for (const file of archivos){
     try {
       const filas = await leerHoja(await file.arrayBuffer());
-      const tipo  = queInforme(filas);
-      if (!tipo) throw new Error(`"${file.name}" no parece ser la cartera por edades ni las cuentas por pagar de Oceanic.`);
-      if (tipo==="cartera"){
+      const d = queInforme(filas);
+      if (!d.tipo) throw new Error(
+        `Se leyeron ${d.filas} filas pero ninguna parece una factura. ` +
+        `Verifica que sea el informe CARTERA POR EDADES o el de CUENTAS POR PAGAR exportado a Excel.`);
+      if (d.tipo==="cartera"){
+        const antes = DATOS.nomCartera;
         DATOS.cartera=leerCartera(filas); DATOS.nomCartera=file.name;
         DATOS.corteCartera=fechaCorte(DATOS.cartera);
+        bitacora.push({ n:file.name, destino:"Cartera", cuantas:DATOS.cartera.length,
+                        reemplazo: antes && antes!==file.name ? antes : null });
       } else {
+        const antes = DATOS.nomCxp;
         DATOS.cxp=leerCxP(filas); DATOS.nomCxp=file.name;
         DATOS.corteCxp=fechaCorte(DATOS.cxp);
+        bitacora.push({ n:file.name, destino:"Cuentas por pagar", cuantas:DATOS.cxp.length,
+                        reemplazo: antes && antes!==file.name ? antes : null });
       }
     } catch(err){
       console.error(err);
       $("#errbox").innerHTML += `<div class="err"><strong>No se pudo leer ${esc(file.name)}.</strong><br>${esc(err.message||err)}</div>`;
     }
+  }
+  /* Decir qué entró en cada casilla. Si dos archivos caen en la misma, es que
+     se exportó dos veces el mismo informe, y así se ve enseguida. */
+  if (bitacora.length){
+    const dobles = bitacora.filter(x => x.reemplazo);
+    $("#errbox").innerHTML +=
+      `<div class="alert ${dobles.length?"warn":"ok"}" style="margin-bottom:14px"><div class="ico">${dobles.length?"!":"✓"}</div><div>`+
+      `<div class="t">${bitacora.map(x=>esc(x.n)+" → "+x.destino+" ("+x.cuantas+" facturas)").join("<br>")}</div>`+
+      (dobles.length
+        ? `<div class="d">Dos archivos entraron en la misma casilla: `+
+          dobles.map(x=>esc(x.n)+" reemplazó a "+esc(x.reemplazo)).join(" · ")+
+          `. Parece que exportaste dos veces el mismo informe de Oceanic. `+
+          `El de cuentas por pagar es el que empieza cada línea con «Fact.».</div>`
+        : "")+
+      `</div></div>`;
   }
   marcarChips();
   if (DATOS.cxp){                       // las cuentas por pagar son la base del flujo
