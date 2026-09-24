@@ -20,6 +20,19 @@ costos fijos de la empresa, y proyecta el saldo de caja semana a semana.
 
 ---
 
+## Los saldos de bancos y caja
+
+Es **lo único que no sale de Oceanic**, y cambia todos los días. Por eso están
+arriba del todo en la pestaña Proyección, editables en el sitio: se escriben los
+tres números y la proyección se rehace sola.
+
+- Se guardan en el navegador, así que solo hay que corregir lo que cambió.
+- Una etiqueta avisa hace cuántos días se actualizaron.
+- Los números se pueden escribir como se escriben en Colombia:
+  `90.348.520` o `1.234.567,89`. El punto separa miles, la coma decimales.
+
+---
+
 ## Las cuatro pestañas
 
 | Pestaña | Qué responde |

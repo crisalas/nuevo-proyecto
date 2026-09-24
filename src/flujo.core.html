@@ -126,6 +126,16 @@ td.name{white-space:normal;min-width:180px;max-width:300px;font-weight:520}
   font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .hidden{display:none!important}
 .share{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.saldos{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.scampo{display:flex;flex-direction:column;gap:3px}
+.scampo span{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.scampo input{font:inherit;font-size:15px;font-weight:600;padding:6px 10px;width:150px;text-align:right;
+  border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.scampo input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.stotal{margin-left:auto;text-align:right}
+.stotal b{display:block;font-size:22px;font-weight:660;letter-spacing:-.02em}
+.stotal small{font-size:11.5px;color:var(--ink-3)}
 .sharebox{display:none;margin-top:10px}
 .sharebox.on{display:block}
 .sharebox textarea{width:100%;min-height:220px;line-height:1.5;font-size:12.5px;resize:vertical;
@@ -212,6 +222,24 @@ const $  = s => document.querySelector(s);
 const el = (t,c,h) => { const n=document.createElement(t); if(c)n.className=c; if(h!=null)n.innerHTML=h; return n; };
 const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const numero = v => { const n = typeof v==="number"?v:parseFloat(String(v==null?"":v).replace(/[^\d.-]/g,"")); return isFinite(n)?n:null; };
+
+/* Lee un número escrito a mano. En Colombia el punto separa los miles y la coma
+   los decimales, así que "120.000.000" son ciento veinte millones, no 120. */
+function aNumero(t){
+  let s = String(t==null?"":t).replace(/[^\d.,-]/g, "");
+  if (!s) return null;
+  const negativo = s.trim().startsWith("-");
+  s = s.replace(/-/g, "");
+  if (s.includes(",")){                       // hay coma: los puntos son miles
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else {
+    const partes = s.split(".");
+    // varios puntos, o uno seguido de exactamente tres cifras: separador de miles
+    if (partes.length > 2 || (partes.length === 2 && partes[1].length === 3)) s = partes.join("");
+  }
+  const v = parseFloat(s);
+  return isFinite(v) ? (negativo ? -v : v) : null;
+}
 const money = v => (v<0?"-$":"$") + Math.round(Math.abs(v||0)).toLocaleString("es-CO");
 function moneyM(v){
   const a=Math.abs(v||0), s=v<0?"-":"";
@@ -364,7 +392,7 @@ const PARAMS_BASE = {
   fijos: [
     { id:"nom1", n:"Nómina 1ª quincena",        v:35000000, dia:15, tipo:"mensual" },
     { id:"nom2", n:"Nómina 2ª quincena",        v:40000000, dia:30, tipo:"mensual" },
-    { id:"ret",  n:"Retención en la fuente",    v:45000000, dia:15, tipo:"mensual" },
+    { id:"ret",  n:"Retención en la fuente",    v:45000000, dia:13, tipo:"mensual" },
     { id:"ss",   n:"Seguridad social",          v:12000000, dia:11, tipo:"mensual" },
     { id:"arr",  n:"Arriendos (casa 2 + oficina)", v:1677000, dia:15, tipo:"mensual" },
     { id:"ser",  n:"Servicios públicos",        v: 1200000, dia:13, tipo:"mensual" },
@@ -408,13 +436,15 @@ function leerParams(){
     if (typeof g[k] === "number") p[k] = g[k];
   p.ventasManual = !!g.ventasManual;      // ¿el usuario ya fijó las ventas a mano?
   if (g.saldos) p.saldos.forEach(s => { if (typeof g.saldos[s.id]==="number") s.v = g.saldos[s.id]; });
+  p.saldosFecha = g.saldosFecha || null;       // cuándo se actualizaron los saldos
   if (g.fijos)  p.fijos.forEach(f => { const x=g.fijos[f.id];
     if (x){ if (typeof x.v==="number") f.v=x.v; if (typeof x.dia==="number") f.dia=x.dia; if (x.fecha) f.fecha=x.fecha; } });
   return p;
 }
 function guardarParams(p){
   const g = { ventas:p.ventas, plazoVenta:p.plazoVenta, retrasoCliente:p.retrasoCliente,
-              recuperaVencido:p.recuperaVencido, ventasManual:!!p.ventasManual, saldos:{}, fijos:{} };
+              recuperaVencido:p.recuperaVencido, ventasManual:!!p.ventasManual,
+              saldosFecha:p.saldosFecha || null, saldos:{}, fijos:{} };
   p.saldos.forEach(s => g.saldos[s.id]=s.v);
   p.fijos.forEach(f => g.fijos[f.id]={ v:f.v, dia:f.dia, fecha:f.fecha });
   try { localStorage.setItem(PARAM_KEY, JSON.stringify(g)); } catch(e){}
@@ -655,6 +685,7 @@ function renderProyeccion(){
       `La proyección toma la fecha más reciente, pero ${viejo} puede traer facturas que ya se movieron. `+
       `Para que cuadre bien, exporta los dos el mismo día.</div></div></div></div>`;
   }
+  h+=tarjetaSaldos();
   h+=`<div class="card"><header><h2>Requiere decisión</h2><span class="note">según los parámetros actuales</span></header>`;
   for (const a of alertasFlujo(R))
     h+=`<div class="alert ${a.n}"><div class="ico">${a.i}</div><div><div class="t">${a.t}</div><div class="d">${a.d}</div></div></div>`;
@@ -700,8 +731,53 @@ function renderProyeccion(){
      Con el botón de arriba puedes ponerlas en cero y ver el escenario más duro: solo lo que ya está facturado.</p></div>`;
   h+=tarjetaCompartir();
   $("#view-pro").innerHTML=h;
+  engancharSaldos();
   engancharSliders();
   engancharCompartir();
+}
+
+/* Los saldos son el único dato que no sale de Oceanic y cambia todos los días.
+   Por eso van arriba y se editan en el sitio, no escondidos en Parámetros. */
+function tarjetaSaldos(){
+  const hoy = new Date().toISOString().slice(0,10);
+  const dias = P.saldosFecha
+    ? Math.round((new Date(hoy) - new Date(P.saldosFecha))/864e5) : null;
+  const aviso = dias === null ? `<span class="pill warn">sin actualizar</span>`
+    : dias === 0 ? `<span class="pill ok">actualizados hoy</span>`
+    : dias <= 2  ? `<span class="pill">hace ${dias} día${dias>1?"s":""}</span>`
+    : `<span class="pill warn">hace ${dias} días</span>`;
+  let h = `<div class="card noprint"><header><div><h2>Saldos de hoy</h2>`+
+    `<div class="note">Lo único que no sale de Oceanic. Actualízalo antes de leer la proyección. ${aviso}</div>`+
+    `</div></header><div class="saldos">`;
+  P.saldos.forEach(x => h+=`<label class="scampo"><span>${esc(x.n)}</span>`+
+    `<input type="text" id="sal-${x.id}" data-s="${x.id}" value="${Math.round(x.v).toLocaleString("es-CO")}"></label>`);
+  h+=`<div class="stotal"><b class="num">${money(P.saldos.reduce((a,b)=>a+b.v,0))}</b>`+
+     `<small>total disponible</small></div></div>`+
+     `<div class="row" style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">`+
+     `<button class="primary" id="salguardar">Actualizar y recalcular</button>`+
+     `<small style="color:var(--ink-3);font-size:11.5px">También se guardan al salir de cada casilla.</small></div></div>`;
+  return h;
+}
+function engancharSaldos(){
+  const leer = () => {
+    let cambio = false;
+    P.saldos.forEach(x => {
+      const n = $("#sal-"+x.id); if (!n) return;
+      const v = aNumero(n.value);
+      if (v !== null && v !== x.v){ x.v = v; cambio = true; }
+    });
+    return cambio;
+  };
+  const aplicar = () => {
+    if (!leer()) return;
+    P.saldosFecha = new Date().toISOString().slice(0,10);
+    guardarParams(P); recalcular();
+  };
+  P.saldos.forEach(x => { const n=$("#sal-"+x.id); if(!n) return;
+    n.onblur = aplicar;
+    n.onkeydown = e => { if (e.key === "Enter"){ e.preventDefault(); aplicar(); } };
+  });
+  const b=$("#salguardar"); if (b) b.onclick = aplicar;
 }
 
 function slider(id,lbl,val,min,max,paso,fmt){
@@ -912,8 +988,7 @@ function renderParams(){
   $("#view-par").innerHTML=h;
 
   $("#guardar").onclick = () => {
-    const leer = k => { const n=$("#p-"+k); if(!n) return null;
-      const x=parseFloat(String(n.value).replace(/[^\d.-]/g,"")); return isFinite(x)?x:null; };
+    const leer = k => { const n=$("#p-"+k); return n ? aNumero(n.value) : null; };
     P.saldos.forEach(s=>{ const v=leer("s-"+s.id); if(v!==null) s.v=v; });
     ["ventas","plazoVenta","retrasoCliente","recuperaVencido"].forEach(k=>{
       const v=leer(k); if(v!==null){ if (k==="ventas" && v!==P.ventas) P.ventasManual=true; P[k]=v; } });
