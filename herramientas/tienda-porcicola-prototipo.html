@@ -1,0 +1,437 @@
+<title>Tienda Porcícola Campofértil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Concepto: vitrina de farmacia veterinaria. Barra superior, rejilla de productos con filtros por categoría y cajón lateral para carrito, datos, pago y confirmación. */
+:root {
+  --bg: #f1f5f2;
+  --surface: #ffffff;
+  --ink: #10231b;
+  --muted: #55675d;
+  --line: #d6e0d9;
+  --brand: #1f5c43;
+  --brand-ink: #ffffff;
+  --accent: #e0707f;
+  --cold: #2a6fb0;
+  --rx: #a8561f;
+  --ok: #1d7a4a;
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1913; --surface: #15241c; --ink: #e8f0ea; --muted: #9db0a4; --line: #27392f;
+    --brand: #5fbf92; --brand-ink: #07160e; --accent: #f0a0ac; --cold: #7db4ea; --rx: #e8a070; --ok: #6fd09c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1913; --surface: #15241c; --ink: #e8f0ea; --muted: #9db0a4; --line: #27392f;
+  --brand: #5fbf92; --brand-ink: #07160e; --accent: #f0a0ac; --cold: #7db4ea; --rx: #e8a070; --ok: #6fd09c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; margin: 0; text-wrap: balance; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin-inline: auto; padding-inline: 16px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* barra de prototipo */
+.demo { background: var(--ink); color: var(--bg); font-size: 13px; padding-block: 8px; }
+.demo .wrap { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; }
+
+/* encabezado */
+.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+.top .wrap { display: flex; align-items: center; gap: 12px 20px; padding-block: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { flex: none; }
+.brand b { font-family: var(--font-display); font-size: 20px; display: block; line-height: 1.1; }
+.brand small { color: var(--muted); font-size: 12px; display: block; }
+.search { flex: 1 1 220px; min-width: 0; }
+.search input { width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.cartbtn { display: inline-flex; align-items: center; gap: 8px; background: var(--brand); color: var(--brand-ink); border: 0; border-radius: 999px; padding: 10px 18px; font-weight: 600; }
+.cartbtn .badge { background: var(--brand-ink); color: var(--brand); border-radius: 999px; min-width: 22px; height: 22px; display: inline-grid; place-items: center; font-size: 12px; padding-inline: 6px; }
+
+/* portada */
+.hero { padding-block: 28px 8px; display: grid; gap: 18px; }
+.hero h1 { font-size: clamp(28px, 5vw, 44px); max-width: 18ch; }
+.hero p { color: var(--muted); max-width: 56ch; margin: 8px 0 0; }
+.pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.pillar { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.pillar svg { flex: none; color: var(--brand); margin-top: 2px; }
+.pillar b { display: block; }
+.pillar span { color: var(--muted); }
+
+/* filtros */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 18px 6px; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-size: 14px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.count { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+/* productos */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; padding-block: 12px 32px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.card.off { opacity: .55; }
+.pic { aspect-ratio: 4 / 3; display: grid; place-items: center; position: relative; background: color-mix(in srgb, var(--tint, var(--brand)) 14%, var(--surface)); color: var(--tint, var(--brand)); }
+.pic svg { width: 46%; height: auto; }
+.pic .ph { position: absolute; left: 10px; bottom: 8px; font-size: 11px; color: var(--muted); }
+.tags { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 11px; font-weight: 600; border-radius: 6px; padding: 2px 7px; background: var(--surface); border: 1px solid currentColor; }
+.tag.cold { color: var(--cold); }
+.tag.rx { color: var(--rx); }
+.body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.body .cat { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.body h3 { font-size: 17px; }
+.body .pres { color: var(--muted); font-size: 13px; }
+.buy { margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.price { font-family: var(--font-display); font-weight: 700; font-size: 19px; }
+.add { border: 1px solid var(--brand); color: var(--brand); background: transparent; border-radius: 8px; padding: 7px 14px; font-weight: 600; }
+.add:hover { background: var(--brand); color: var(--brand-ink); }
+.add:disabled { border-color: var(--line); color: var(--muted); cursor: not-allowed; background: transparent; }
+.empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 40px 0; }
+
+/* cajón */
+.veil { position: fixed; inset: 0; background: rgb(0 0 0 / .45); z-index: 30; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100%); background: var(--surface); z-index: 31; display: flex; flex-direction: column; border-left: 1px solid var(--line); }
+.drawer header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px; border-bottom: 1px solid var(--line); }
+.drawer header h2 { font-size: 20px; }
+.x { background: transparent; border: 1px solid var(--line); border-radius: 8px; width: 36px; height: 36px; }
+.dbody { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.dfoot { border-top: 1px solid var(--line); padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; }
+.line { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.line b { font-weight: 600; }
+.line small { color: var(--muted); display: block; }
+.qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; }
+.qty button { background: transparent; border: 0; width: 32px; height: 32px; font-size: 18px; }
+.qty span { min-width: 28px; text-align: center; }
+.sum { display: grid; gap: 6px; font-size: 14px; }
+.sum div { display: flex; justify-content: space-between; gap: 12px; }
+.sum .total { font-family: var(--font-display); font-weight: 700; font-size: 20px; border-top: 1px solid var(--line); padding-top: 8px; }
+.primary { background: var(--brand); color: var(--brand-ink); border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 600; text-align: center; text-decoration: none; display: block; }
+.ghost { background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 11px 16px; font-weight: 500; text-align: center; text-decoration: none; display: block; color: var(--ink); }
+.wa { background: #1fa855; color: #fff; }
+.note { font-size: 13px; border-radius: 8px; padding: 9px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); }
+.note.cold { border-color: var(--cold); color: var(--cold); }
+.note.rx { border-color: var(--rx); color: var(--rx); }
+form.f { display: grid; gap: 12px; }
+.fld { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.fld input, .fld select { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+legend { font-size: 13px; color: var(--muted); padding: 0; margin-bottom: 6px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 8%, var(--surface)); }
+.opt small { color: var(--muted); display: block; }
+.err { color: #c0392b; font-size: 13px; }
+:root[data-theme="dark"] .err { color: #ff8a7a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .err { color: #ff8a7a; } }
+.ok { color: var(--ok); }
+.bank { display: grid; gap: 6px; font-size: 14px; border: 1px dashed var(--line); border-radius: 8px; padding: 12px; }
+.bank div { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.copy { border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 3px 10px; font-size: 12px; }
+
+/* panel interno */
+.admin { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 32px; display: grid; gap: 18px; }
+.admin h2 { font-size: 22px; }
+.admin h3 { font-size: 16px; margin-bottom: 8px; }
+.tw { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; white-space: nowrap; }
+td input[type="number"], td select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); width: 120px; }
+footer { border-top: 1px solid var(--line); padding-block: 22px 40px; color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: space-between; align-items: center; }
+footer button { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s; } .card:hover { border-color: var(--brand); } }
+</style>
+
+<div class="demo"><div class="wrap">
+  <span><b>PROTOTIPO</b> con datos de ejemplo. Productos, precios, cuentas y teléfono son ficticios.</span>
+  <span>Pruébelo: agregue productos, abra el carrito y haga un pedido.</span>
+</div></div>
+
+<div class="top"><div class="wrap">
+  <div class="brand">
+    <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--brand)"/><circle cx="20" cy="22" r="9" fill="var(--accent)"/><path d="M12.5 15.5 11 9l6 3.2M27.5 15.5 29 9l-6 3.2" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="20" cy="24.5" rx="4.2" ry="3" fill="var(--brand)" opacity=".28"/><circle cx="18.2" cy="24.5" r=".9" fill="var(--brand)"/><circle cx="21.8" cy="24.5" r=".9" fill="var(--brand)"/><circle cx="16.3" cy="19.8" r="1.1" fill="var(--brand)"/><circle cx="23.7" cy="19.8" r="1.1" fill="var(--brand)"/></svg>
+    <div><b>Campofértil</b><small>Línea porcícola · Cartago, Valle</small></div>
+  </div>
+  <div class="search"><input id="q" type="search" placeholder="Buscar por nombre o categoría" aria-label="Buscar productos"></div>
+  <button class="cartbtn" id="openCart" type="button">Carrito <span class="badge num" id="cartCount">0</span></button>
+</div></div>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h1>Medicinas y biológicos para su granja, hasta la puerta</h1>
+      <p>Comercializadora establecida en Cartago. Despachamos al Valle del Cauca y al Eje Cafetero, y las vacunas viajan en cadena de frío.</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4.9 6l14.2 12M19.1 6 4.9 18"/></svg><div><b>Vacunas en frío</b><span>Se despachan en cava con gel refrigerante.</span></div></div>
+      <div class="pillar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><div><b>Pague como prefiera</b><span>PSE o transferencia a Bancolombia o Davivienda.</span></div></div>
+      <div class="pillar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.7 7.1L3 21l1.9-6.3A8 8 0 1 1 21 12Z"/></svg><div><b>Confirme por WhatsApp</b><span>Un asesor revisa su pedido y coordina la entrega.</span></div></div>
+    </div>
+  </section>
+
+  <div class="filters" id="filters" role="group" aria-label="Categorías"></div>
+  <div class="grid" id="grid"></div>
+
+  <section class="admin" id="admin" hidden>
+    <div>
+      <h2>Panel interno (vista previa)</h2>
+      <p class="note" style="margin-top:8px">Así vería y manejaría usted la tienda. Cambie un precio o desactive un producto y la vitrina se actualiza al instante. Los pedidos de esta sesión aparecen abajo.</p>
+    </div>
+    <div>
+      <h3>Pedidos recibidos</h3>
+      <div class="tw"><table><thead><tr><th>Pedido</th><th>Fecha</th><th>Cliente</th><th>Ciudad</th><th>Pago</th><th>Total</th><th>Estado</th></tr></thead><tbody id="orders"></tbody></table></div>
+    </div>
+    <div>
+      <h3>Productos y precios</h3>
+      <div class="tw"><table><thead><tr><th>Producto</th><th>Precio (COP)</th><th>Disponible</th></tr></thead><tbody id="prodAdmin"></tbody></table></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Comercializadora Campofértil S.A.S. · Cartago, Valle del Cauca</span>
+    <button type="button" id="toggleAdmin">Ver cómo lo administraría</button>
+  </footer>
+</main>
+
+<div class="veil" id="veil" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Carrito y pedido">
+  <header><h2 id="dTitle">Su carrito</h2><button class="x" id="closeCart" type="button" aria-label="Cerrar">✕</button></header>
+  <div class="dbody" id="dBody"></div>
+  <div class="dfoot" id="dFoot"></div>
+</aside>
+
+<script>
+(function () {
+  var ICONS = {
+    vial: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 5h12M20 5v5l-4 5v26a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V15l-4-5V5"/><path d="M16 24h16" /><path d="M16 31h16" opacity=".5"/></svg>',
+    bottle: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 4h10v7h-10zM17 11h14a3 3 0 0 1 3 3v27a3 3 0 0 1-3 3H17a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z"/><path d="M14 22h20M14 34h20" opacity=".5"/></svg>',
+    bag: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8h20l3 6v26a3 3 0 0 1-3 3H14a3 3 0 0 1-3-3V14z"/><path d="M11 14h26M19 24h10M19 30h10" /></svg>'
+  };
+  var CATS = [
+    { id: 'vacunas', name: 'Vacunas', tint: 'var(--cold)' },
+    { id: 'antibioticos', name: 'Antibióticos', tint: 'var(--rx)' },
+    { id: 'antiparasitarios', name: 'Antiparasitarios', tint: 'var(--brand)' },
+    { id: 'vitaminas', name: 'Vitaminas y suplementos', tint: 'var(--accent)' },
+    { id: 'antiinflamatorios', name: 'Antiinflamatorios', tint: 'var(--muted)' }
+  ];
+  // Datos de ejemplo. En la versión real salen del Excel de Oceanic.
+  var P = [
+    { id: 1, n: 'Vacuna Peste Porcina Clásica', c: 'vacunas', pr: 'Frasco 50 dosis', p: 98000, cold: 1, ic: 'vial' },
+    { id: 2, n: 'Vacuna Parvovirus + Leptospira + Erisipela', c: 'vacunas', pr: 'Frasco 25 dosis', p: 132000, cold: 1, ic: 'vial' },
+    { id: 3, n: 'Vacuna Circovirus porcino (PCV2)', c: 'vacunas', pr: 'Frasco 50 dosis', p: 215000, cold: 1, ic: 'vial' },
+    { id: 4, n: 'Vacuna Mycoplasma hyopneumoniae', c: 'vacunas', pr: 'Frasco 100 mL', p: 245000, cold: 1, ic: 'vial' },
+    { id: 5, n: 'Vacuna E. coli + Clostridium para cerdas', c: 'vacunas', pr: 'Frasco 50 mL', p: 168000, cold: 1, ic: 'vial' },
+    { id: 6, n: 'Oxitetraciclina 20% larga acción', c: 'antibioticos', pr: 'Frasco 100 mL', p: 38500, rx: 1, ic: 'bottle' },
+    { id: 7, n: 'Enrofloxacina 10% inyectable', c: 'antibioticos', pr: 'Frasco 100 mL', p: 46000, rx: 1, ic: 'bottle' },
+    { id: 8, n: 'Amoxicilina 15% larga acción', c: 'antibioticos', pr: 'Frasco 100 mL', p: 52000, rx: 1, ic: 'bottle' },
+    { id: 9, n: 'Tilosina 20% inyectable', c: 'antibioticos', pr: 'Frasco 100 mL', p: 58000, rx: 1, ic: 'bottle' },
+    { id: 10, n: 'Ivermectina 1% inyectable', c: 'antiparasitarios', pr: 'Frasco 50 mL', p: 29500, ic: 'bottle' },
+    { id: 11, n: 'Fenbendazol 20% polvo', c: 'antiparasitarios', pr: 'Bolsa 1 kg', p: 74000, ic: 'bag' },
+    { id: 12, n: 'Hierro dextrano 200 mg/mL (lechones)', c: 'vitaminas', pr: 'Frasco 100 mL', p: 34000, ic: 'bottle' },
+    { id: 13, n: 'Complejo vitamínico A-D-E', c: 'vitaminas', pr: 'Frasco 100 mL', p: 31000, ic: 'bottle' },
+    { id: 14, n: 'Electrolitos orales para lechones', c: 'vitaminas', pr: 'Bolsa 500 g', p: 22500, ic: 'bag' },
+    { id: 15, n: 'Meloxicam 2% inyectable', c: 'antiinflamatorios', pr: 'Frasco 50 mL', p: 61000, rx: 1, ic: 'bottle' },
+    { id: 16, n: 'Flunixin meglumine 5%', c: 'antiinflamatorios', pr: 'Frasco 50 mL', p: 54000, rx: 1, ic: 'bottle' }
+  ].map(function (x) { x.on = true; return x; });
+  var ZONES = { 'Valle del Cauca': 15000, 'Risaralda': 20000, 'Quindío': 20000, 'Caldas': 22000 };
+  var COLD_FEE = 8000, FREE_FROM = 600000;
+  var WA = '573000000000';
+  var PAYS = {
+    pse: { name: 'PSE (pago en línea)' },
+    bancolombia: { name: 'Transferencia Bancolombia', bank: 'Bancolombia', acct: '000-000000-00' },
+    davivienda: { name: 'Transferencia Davivienda', bank: 'Davivienda', acct: '0000 0000 0000' }
+  };
+  var STATES = ['Pendiente de pago', 'Pago recibido', 'Despachado', 'Entregado'];
+
+  var S = { cat: 'all', q: '', cart: {}, view: 'cart', form: { dept: 'Valle del Cauca', pay: 'pse' }, orders: [], seq: 0, last: null, err: '' };
+  var $ = function (id) { return document.getElementById(id); };
+  var cop = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+  var money = function (v) { return cop.format(v); };
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function byId(id) { return P.filter(function (x) { return x.id === id; })[0]; }
+  function today() { var d = new Date(); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
+
+  /* ---------- vitrina ---------- */
+  function renderFilters() {
+    var all = [{ id: 'all', name: 'Todos' }].concat(CATS);
+    $('filters').innerHTML = all.map(function (c) {
+      return '<button type="button" class="chip" data-cat="' + c.id + '" aria-pressed="' + (S.cat === c.id) + '">' + esc(c.name) + '</button>';
+    }).join('') + '<span class="count num" id="count"></span>';
+  }
+  function renderGrid() {
+    var q = S.q.trim().toLowerCase();
+    var list = P.filter(function (x) {
+      var cn = CATS.filter(function (c) { return c.id === x.c; })[0].name;
+      return (S.cat === 'all' || x.c === S.cat) && (!q || (x.n + ' ' + cn + ' ' + x.pr).toLowerCase().indexOf(q) > -1);
+    });
+    $('count').textContent = list.length + ' de ' + P.length + ' productos de ejemplo';
+    if (!list.length) { $('grid').innerHTML = '<p class="empty">No encontramos productos con esa búsqueda.</p>'; return; }
+    $('grid').innerHTML = list.map(function (x) {
+      var cat = CATS.filter(function (c) { return c.id === x.c; })[0];
+      var tags = (x.cold ? '<span class="tag cold">Cadena de frío 2–8 °C</span>' : '') + (x.rx ? '<span class="tag rx">Con fórmula</span>' : '');
+      return '<article class="card' + (x.on ? '' : ' off') + '"><div class="pic" style="--tint:' + cat.tint + '">' + ICONS[x.ic] +
+        '<div class="tags">' + tags + '</div><span class="ph">Foto del laboratorio</span></div>' +
+        '<div class="body"><span class="cat">' + esc(cat.name) + '</span><h3>' + esc(x.n) + '</h3><span class="pres">' + esc(x.pr) + '</span>' +
+        '<div class="buy"><span class="price num">' + money(x.p) + '</span>' +
+        '<button type="button" class="add" data-add="' + x.id + '"' + (x.on ? '' : ' disabled') + '>' + (x.on ? 'Agregar' : 'Agotado') + '</button></div></div></article>';
+    }).join('');
+  }
+
+  /* ---------- carrito ---------- */
+  function lines() { return Object.keys(S.cart).map(function (k) { return { p: byId(+k), q: S.cart[k] }; }).filter(function (l) { return l.p && l.q > 0; }); }
+  function totals() {
+    var ls = lines(), sub = 0, cold = false, rx = false, items = 0;
+    ls.forEach(function (l) { sub += l.p.p * l.q; items += l.q; if (l.p.cold) cold = true; if (l.p.rx) rx = true; });
+    var ship = ls.length ? (sub >= FREE_FROM ? 0 : ZONES[S.form.dept]) : 0;
+    var fee = cold ? COLD_FEE : 0;
+    return { ls: ls, sub: sub, ship: ship, fee: fee, cold: cold, rx: rx, items: items, total: sub + ship + fee };
+  }
+  function sumHTML(t) {
+    return '<div class="sum"><div><span>Productos</span><span class="num">' + money(t.sub) + '</span></div>' +
+      '<div><span>Envío a ' + esc(S.form.dept) + '</span><span class="num">' + (t.ship ? money(t.ship) : (t.ls.length ? 'Gratis' : '—')) + '</span></div>' +
+      (t.cold ? '<div><span>Cava con refrigerante</span><span class="num">' + money(t.fee) + '</span></div>' : '') +
+      '<div class="total"><span>Total</span><span class="num">' + money(t.total) + '</span></div></div>';
+  }
+  function notes(t) {
+    return (t.cold ? '<p class="note cold">Su pedido incluye vacunas. Viajan en cava con gel refrigerante y deben guardarse a 2–8 °C apenas lleguen.</p>' : '') +
+      (t.rx ? '<p class="note rx">Hay medicamentos que requieren fórmula del médico veterinario. Se la pediremos por WhatsApp antes de despachar.</p>' : '');
+  }
+  function renderDrawer() {
+    var t = totals(), b = $('dBody'), f = $('dFoot');
+    $('cartCount').textContent = t.items;
+    if (S.view === 'cart') {
+      $('dTitle').textContent = 'Su carrito';
+      if (!t.ls.length) {
+        b.innerHTML = '<p class="empty" style="padding:30px 0">Aún no ha agregado productos.</p>';
+        f.innerHTML = '<button type="button" class="ghost" data-act="close">Seguir comprando</button>';
+        return;
+      }
+      b.innerHTML = t.ls.map(function (l) {
+        return '<div class="line"><div><b>' + esc(l.p.n) + '</b><small>' + esc(l.p.pr) + ' · ' + money(l.p.p) + '</small></div>' +
+          '<span class="num"><b>' + money(l.p.p * l.q) + '</b></span>' +
+          '<div class="qty"><button type="button" data-dec="' + l.p.id + '" aria-label="Quitar uno">−</button><span class="num">' + l.q + '</span><button type="button" data-inc="' + l.p.id + '" aria-label="Agregar uno">+</button></div>' +
+          '<button type="button" class="copy" data-del="' + l.p.id + '">Quitar</button></div>';
+      }).join('') + notes(t);
+      f.innerHTML = '<div id="sumBox">' + sumHTML(t) + '</div><button type="button" class="primary" data-act="checkout">Continuar con el pedido</button>';
+    } else if (S.view === 'checkout') {
+      $('dTitle').textContent = 'Datos y pago';
+      var F = S.form;
+      b.innerHTML = '<form class="f" id="ck" novalidate>' +
+        '<div class="two"><label class="fld">Nombre o razón social<input id="fName" value="' + esc(F.name || '') + '" autocomplete="name"></label>' +
+        '<label class="fld">Cédula o NIT<input id="fDoc" value="' + esc(F.doc || '') + '" inputmode="numeric"></label></div>' +
+        '<div class="two"><label class="fld">Celular (WhatsApp)<input id="fTel" value="' + esc(F.tel || '') + '" inputmode="tel" autocomplete="tel"></label>' +
+        '<label class="fld">Correo electrónico<input id="fMail" type="email" value="' + esc(F.mail || '') + '" autocomplete="email"></label></div>' +
+        '<div class="two"><label class="fld">Departamento<select id="fDept">' + Object.keys(ZONES).map(function (z) { return '<option' + (z === F.dept ? ' selected' : '') + '>' + z + '</option>'; }).join('') + '</select></label>' +
+        '<label class="fld">Municipio<input id="fCity" value="' + esc(F.city || '') + '" placeholder="Ej: Cartago" autocomplete="address-level2"></label></div>' +
+        '<label class="fld">Dirección o vereda de entrega<input id="fAddr" value="' + esc(F.addr || '') + '" autocomplete="street-address"></label>' +
+        '<fieldset><legend>Forma de pago</legend>' + Object.keys(PAYS).map(function (k) {
+          var d = { pse: 'Pague en línea desde su banco.', bancolombia: 'Cuenta de ahorros. Enviamos los datos al finalizar.', davivienda: 'Cuenta de ahorros. Enviamos los datos al finalizar.' }[k];
+          return '<label class="opt"><input type="radio" name="pay" value="' + k + '"' + (F.pay === k ? ' checked' : '') + '><span>' + PAYS[k].name + '<small>' + d + '</small></span></label>';
+        }).join('') + '</fieldset>' +
+        (t.rx ? '<label class="opt"><input type="checkbox" id="fRx"' + (F.rx ? ' checked' : '') + '><span>Entiendo que debo enviar la fórmula del médico veterinario por WhatsApp.</span></label>' : '') +
+        '<p class="err" id="err">' + esc(S.err) + '</p></form>' + notes(t);
+      f.innerHTML = '<div id="sumBox">' + sumHTML(t) + '</div><button type="button" class="primary" data-act="confirm">Confirmar pedido</button><button type="button" class="ghost" data-act="back">Volver al carrito</button>';
+    } else {
+      var o = S.last, py = PAYS[o.pay];
+      $('dTitle').textContent = 'Pedido ' + o.no;
+      var inst = o.pay === 'pse'
+        ? '<p class="note">En la tienda real, aquí el cliente pasa a PSE para pagar desde su banco y el pedido queda marcado como pagado de forma automática.</p>'
+        : '<div class="bank"><div><span>Banco</span><b>' + py.bank + '</b></div><div><span>Tipo de cuenta</span><b>Ahorros</b></div>' +
+          '<div><span>Número</span><span><b class="num">' + py.acct + '</b> <button type="button" class="copy" data-copy="' + py.acct + '">Copiar</button></span></div>' +
+          '<div><span>Titular</span><b>Comercializadora Campofértil S.A.S.</b></div><div><span>Valor exacto</span><b class="num">' + money(o.total) + '</b></div>' +
+          '<div><span>Referencia</span><b>' + o.no + '</b></div></div><p class="note">Datos de cuenta de ejemplo. Después de transferir, envíe el comprobante por WhatsApp.</p>';
+      b.innerHTML = '<p class="ok"><b>Pedido recibido.</b> Gracias, ' + esc(o.name) + '.</p>' + inst +
+        (o.rx ? '<p class="note rx">Recuerde enviar la fórmula del médico veterinario para los medicamentos que la requieren.</p>' : '') +
+        (o.cold ? '<p class="note cold">Las vacunas se despachan en cava con refrigerante.</p>' : '') +
+        '<p style="margin:0;color:var(--muted)">Confirme su pedido con un asesor por WhatsApp para coordinar la entrega.</p>';
+      f.innerHTML = '<a class="primary wa" target="_blank" rel="noopener" href="https://wa.me/' + WA + '?text=' + encodeURIComponent(o.msg) + '">Confirmar por WhatsApp</a><button type="button" class="ghost" data-act="done">Seguir comprando</button>';
+    }
+  }
+  function openDrawer(view) { S.view = view || 'cart'; $('veil').hidden = false; $('drawer').hidden = false; renderDrawer(); }
+  function closeDrawer() { $('veil').hidden = true; $('drawer').hidden = true; }
+  function readForm() {
+    if (!$('ck')) return;
+    var F = S.form, g = function (id) { var e = $(id); return e ? e.value.trim() : ''; };
+    F.name = g('fName'); F.doc = g('fDoc'); F.tel = g('fTel'); F.mail = g('fMail'); F.dept = g('fDept') || F.dept; F.city = g('fCity'); F.addr = g('fAddr');
+    var r = document.querySelector('input[name="pay"]:checked'); if (r) F.pay = r.value;
+    var rx = $('fRx'); F.rx = rx ? rx.checked : false;
+  }
+  function confirmOrder() {
+    readForm();
+    var F = S.form, t = totals(), miss = [];
+    if (!F.name) miss.push('nombre'); if (!F.doc) miss.push('cédula o NIT'); if (!F.tel) miss.push('celular');
+    if (!F.city) miss.push('municipio'); if (!F.addr) miss.push('dirección');
+    if (miss.length) { S.err = 'Falta: ' + miss.join(', ') + '.'; renderDrawer(); return; }
+    if (F.mail && !/^\S+@\S+\.\S+$/.test(F.mail)) { S.err = 'El correo no parece válido.'; renderDrawer(); return; }
+    if (t.rx && !F.rx) { S.err = 'Marque la casilla de la fórmula veterinaria para continuar.'; renderDrawer(); return; }
+    S.err = ''; S.seq += 1;
+    var no = 'PED-' + ('000' + S.seq).slice(-4);
+    var detail = t.ls.map(function (l) { return '• ' + l.q + ' x ' + l.p.n + ' (' + l.p.pr + ')'; }).join('\n');
+    var msg = 'Hola, quiero confirmar mi pedido ' + no + ' en la tienda Campofértil.\n\n' + detail + '\n\nTotal: ' + money(t.total) +
+      '\nPago: ' + PAYS[F.pay].name + '\nEntrega: ' + F.addr + ', ' + F.city + ' (' + F.dept + ')\nA nombre de: ' + F.name + ' - ' + F.doc;
+    var o = { no: no, date: today(), name: F.name, city: F.city + ', ' + F.dept, pay: F.pay, total: t.total, rx: t.rx, cold: t.cold, msg: msg, state: STATES[0] };
+    S.orders.unshift(o); S.last = o; S.cart = {};
+    S.view = 'done'; renderDrawer(); renderAdmin();
+  }
+
+  /* ---------- panel interno ---------- */
+  function renderAdmin() {
+    $('orders').innerHTML = S.orders.length ? S.orders.map(function (o, i) {
+      return '<tr><td>' + o.no + '</td><td class="num">' + o.date + '</td><td>' + esc(o.name) + '</td><td>' + esc(o.city) + '</td><td>' + PAYS[o.pay].name + '</td><td class="num">' + money(o.total) + '</td>' +
+        '<td><select data-state="' + i + '" aria-label="Estado del pedido ' + o.no + '">' + STATES.map(function (s) { return '<option' + (s === o.state ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></td></tr>';
+    }).join('') : '<tr><td colspan="7" style="color:var(--muted)">Todavía no hay pedidos. Haga uno en la tienda y aparecerá aquí.</td></tr>';
+    $('prodAdmin').innerHTML = P.map(function (x) {
+      return '<tr><td>' + esc(x.n) + '<br><small style="color:var(--muted)">' + esc(x.pr) + '</small></td>' +
+        '<td><input type="number" min="0" step="500" value="' + x.p + '" data-price="' + x.id + '" aria-label="Precio de ' + esc(x.n) + '"></td>' +
+        '<td><input type="checkbox" data-on="' + x.id + '"' + (x.on ? ' checked' : '') + ' aria-label="Disponible: ' + esc(x.n) + '"></td></tr>';
+    }).join('');
+  }
+
+  /* ---------- eventos ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('button, a'); if (!el) return;
+    var d = el.dataset;
+    if (d.cat) { S.cat = d.cat; renderFilters(); renderGrid(); }
+    else if (d.add) { var id = d.add; S.cart[id] = (S.cart[id] || 0) + 1; renderDrawer(); openDrawer('cart'); }
+    else if (d.inc) { S.cart[d.inc] += 1; renderDrawer(); }
+    else if (d.dec) { S.cart[d.dec] -= 1; if (S.cart[d.dec] < 1) delete S.cart[d.dec]; renderDrawer(); }
+    else if (d.del) { delete S.cart[d.del]; renderDrawer(); }
+    else if (d.act === 'close' || d.act === 'done') closeDrawer();
+    else if (d.act === 'checkout') { S.err = ''; S.view = 'checkout'; renderDrawer(); }
+    else if (d.act === 'back') { readForm(); S.view = 'cart'; renderDrawer(); }
+    else if (d.act === 'confirm') confirmOrder();
+    else if (d.copy) {
+      var ok = function () { el.textContent = 'Copiado'; };
+      try { navigator.clipboard.writeText(d.copy).then(ok, function () { el.textContent = 'Seleccione y copie'; }); } catch (x) { el.textContent = 'Seleccione y copie'; }
+    }
+    else if (el.id === 'openCart') openDrawer('cart');
+    else if (el.id === 'closeCart') closeDrawer();
+    else if (el.id === 'toggleAdmin') {
+      var a = $('admin'); a.hidden = !a.hidden;
+      el.textContent = a.hidden ? 'Ver cómo lo administraría' : 'Ocultar panel interno';
+      if (!a.hidden) a.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  $('veil').addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('drawer').hidden) closeDrawer(); });
+  $('q').addEventListener('input', function (e) { S.q = e.target.value; renderGrid(); });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'fDept') { S.form.dept = t.value; var tt = totals(); $('sumBox').innerHTML = sumHTML(tt); }
+    else if (t.name === 'pay') { S.form.pay = t.value; }
+    else if (t.dataset.price) { var p = byId(+t.dataset.price); var v = parseInt(t.value, 10); if (p && v >= 0) { p.p = v; renderGrid(); renderDrawer(); } }
+    else if (t.dataset.on) { byId(+t.dataset.on).on = t.checked; renderGrid(); }
+    else if (t.dataset.state) { S.orders[+t.dataset.state].state = t.value; }
+  });
+
+  renderFilters(); renderGrid(); renderAdmin(); renderDrawer();
+})();
+</script>
