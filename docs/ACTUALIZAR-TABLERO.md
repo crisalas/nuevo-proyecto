@@ -18,8 +18,8 @@ Cuando Cristhian diga **"actualiza"**, Claude hace su parte y le entrega el arch
 
 ## Lo que hace Cristhian (2 minutos, mejor desde el computador)
 1. Descargar el archivo `index.html` que Claude le envió.
-2. Entrar a **github.com/crisalas/tablero-cobro**.
-3. Pulsar **Add file** (Agregar archivo) y elegir **Upload files** (Cargar archivos).
+2. Abrir directamente **github.com/crisalas/tablero-cobro/upload/main** (la pantalla para subir archivos).
+3. (Ya no hace falta buscar «Add file → Upload files»: ese enlace abre la pantalla de carga.)
 4. Arrastrar `index.html`. Debe llamarse igual para que reemplace al anterior.
 5. Pulsar el botón verde **Commit changes** (confirmar cambios).
 6. Esperar uno o dos minutos, abrir **https://crisalas.github.io/tablero-cobro/**,
